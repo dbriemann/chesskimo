@@ -5,6 +5,7 @@ import (
 )
 
 func main() {
-	var bb SimpleBB
+	bb := NewRootBB()
+
 	fmt.Println(bb)
 }
