@@ -18,7 +18,7 @@ var (
 	ErrFENColorInvalid = errors.New("FEN has invalid color field")
 	// ErrFENSquareInvalid indicates that a FEN record contains an invalid square.
 	ErrFENSquareInvalid = errors.New("FEN has invalid square")
-	// ErrFENMoveNumInvalid indicates that a FEN record contians an invalid move number.
+	// ErrFENMoveNumInvalid indicates that a FEN record contains an invalid move number.
 	ErrFENMoveNumInvalid = errors.New("FEN has invalid move number")
 
 	// FENMap maps FEN piece symbols (plus empty ' ') to the internal definition.
@@ -39,7 +39,7 @@ var (
 	}
 )
 
-// SplitFields splits a FEN into its fields and returns them seperated into a slice,
+// SplitFields splits a FEN into its fields and returns them separated into a slice,
 // or an error if the amount of fields is not equal 6.
 func SplitFields(fen string) ([]string, error) {
 	fields := strings.Split(fen, " ")
