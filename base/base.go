@@ -1,8 +1,9 @@
-package main
+// Package base provides basic constants and functions valid for
+// all types of bitboard representations.
+package base
 
 type Color uint8
-type PieceType int
-type OccupancyType int
+type Piece int
 
 const (
 	// various
@@ -39,28 +40,28 @@ const (
 
 const (
 	// piece types
-	PAWN   PieceType = iota // 0
-	KNIGHT                  // 1
-	BISHOP                  // 2
-	ROOK                    // 3
-	QUEEN                   // 4
-	KING                    // 5
+	PAWN   Piece = iota // 0
+	KNIGHT              // 1
+	BISHOP              // 2
+	ROOK                // 3
+	QUEEN               // 4
+	KING                // 5
 )
 
 const (
 	// occupancy types by color and piece
-	WPAWN   OccupancyType = iota // 0
-	WKNIGHT                      // 1
-	WBISHOP                      // 2
-	WROOK                        // 3
-	WQUEEN                       // 4
-	WKING                        // 5
-	EMPTY                        // 6
-	_                            // 7 - skip
-	BPAWN                        // 8
-	BKNIGHT                      // 9
-	BBISHOP                      // 10
-	BROOK                        // 11
-	BQUEEN                       // 12
-	BKING                        // 13
+	WPAWN   Piece = iota // 0
+	WKNIGHT              // 1
+	WBISHOP              // 2
+	WROOK                // 3
+	WQUEEN               // 4
+	WKING                // 5
+	EMPTY                // 6
+	_                    // 7 - skip
+	BPAWN                // 8
+	BKNIGHT              // 9
+	BBISHOP              // 10
+	BROOK                // 11
+	BQUEEN               // 12
+	BKING                // 13
 )
