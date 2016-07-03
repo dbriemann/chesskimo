@@ -39,10 +39,29 @@ var (
 	}
 )
 
+// // ValidateFEN validates a FEN string.
+// TODO
+// func ValidateFEN(fen string) bool {
+// 	// Must have 6 fields, split by ONE space.
+// 	fields := strings.Split(fen, " ")
+// 	if len(fields) != 6 {
+// 		return ErrFENFieldsInvalid
+// 	}
+
+// 	// Field 0 contains the pieces setup of the board.
+// 	// Must have 8 ranks and only specific characters are allowed inside.
+// 	rank := "[prnbqkPRNBQK12345678]+"
+// 	pattern := fmt.Sprintf("(%s)/(%s)/(%s)/(%s)/(%s)/(%s)/(%s)/(%s)", rank, rank, rank, rank, rank, rank, rank, rank)
+// 	reg := regexp.MustCompile(pattern)
+
+// 	return true
+// }
+
 // SplitFields splits a FEN into its fields and returns them separated into a slice,
 // or an error if the amount of fields is not equal 6.
 func SplitFields(fen string) ([]string, error) {
-	fields := strings.Split(fen, " ")
+	// Split for any number of whitespaces. Is fault tolerant to some malformed FENs.
+	fields := strings.Fields(fen)
 	if len(fields) != 6 {
 		return nil, ErrFENFieldsInvalid
 	}
@@ -133,13 +152,16 @@ func ParseEnPassent(ep string) (int, error) {
 }
 
 // ParseMoveNumber parses a move number from the 'num' string.
-func ParseMoveNumber(num string) (uint8, error) {
-	n, err := strconv.ParseInt(num, 10, 8)
-	if err != nil || n < 0 {
+func ParseMoveNumber(num string) (uint16, error) {
+	n, err := strconv.ParseInt(num, 10, 16)
+	if err != nil {
+		return 0, err
+	}
+	if n < 0 {
 		return 0, ErrFENMoveNumInvalid
 	}
 
-	return uint8(n), nil
+	return uint16(n), nil
 }
 
 func parseSquare(sq string) (int, error) {

@@ -14,7 +14,7 @@ type SimpleBB struct {
 	kings                 [2]uint8
 	enPassentSquare       uint8
 	drawCounter           uint8
-	moveNumber            uint8 // could this be too small?
+	moveNumber            uint16 // could this be too small?
 	player                base.Color
 	castleShort           [2]bool
 	castleLong            [2]bool
