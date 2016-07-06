@@ -4,6 +4,7 @@ package base
 
 type Color uint8
 type Piece int
+type Square uint8
 
 const (
 	// various

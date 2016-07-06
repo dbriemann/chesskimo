@@ -9,29 +9,38 @@ import (
 
 // SimpleBB implements a chess game board state with 'kindergarten' bitboards.
 type SimpleBB struct {
-	bbPiecesByColoruint64 [2]uint64
-	bbPiecesByType        [6]uint64
-	kings                 [2]uint8
-	enPassentSquare       uint8
-	drawCounter           uint8
-	moveNumber            uint16 // could this be too small?
-	player                base.Color
-	castleShort           [2]bool
-	castleLong            [2]bool
-	isCheck               bool
+	bbPiecesByColor [2]uint64
+	bbPiecesByType  [6]uint64
+	kings           [2]uint8
+	enPassentSquare uint8
+	drawCounter     uint8
+	moveNumber      uint16
+	player          base.Color
+	castleShort     [2]bool
+	castleLong      [2]bool
+	isCheck         bool
 }
 
 // NewRootBB creates a new instance of a SimpleBB.
 // The created state is the root/starting position of a chess game.
 func NewRootBB() SimpleBB {
 	bb := SimpleBB{}
+	bb.SetStartingPosition()
+
+	return bb
+}
+
+// SetStartingPosition sets the starting position of a default chess game via FEN code.
+func (bb *SimpleBB) SetStartingPosition() {
 	err := bb.SetFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 	if err != nil {
 		panic(err)
 	}
-
-	return bb
 }
+
+// func (bb *SimpleBB) GetSquare(file, rank base.Square) {
+
+// }
 
 // SetFEN sets a chess position from a 'FEN' string.
 func (bb *SimpleBB) SetFEN(fenstr string) error {

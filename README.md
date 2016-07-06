@@ -3,3 +3,6 @@
 
 # chesskimo
 Chess engine written in Go
+
+## TODO
+ * package fen: Implement a FEN validator function.
