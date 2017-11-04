@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/zensword/chesskimo/board"
+	"github.com/dbriemann/chesskimo/board"
 )
 
 func main() {
