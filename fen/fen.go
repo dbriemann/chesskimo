@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/zensword/chesskimo/base"
+	"github.com/dbriemann/chesskimo/base"
 )
 
 var (
@@ -142,8 +142,8 @@ func ParseCastlingRights(castle string) ([2]bool, [2]bool) {
 	return short, long
 }
 
-// ParseEnPassent parses the current possible en passent capture square, if there is any.
-func ParseEnPassent(ep string) (int, error) {
+// ParseEnPassent parses the current possible en passent capture square, if there is one.
+func ParseEnPassent(ep string) (base.Square, error) {
 	if ep == "-" {
 		return base.NONE, nil
 	}
@@ -164,14 +164,14 @@ func ParseMoveNumber(num string) (uint16, error) {
 	return uint16(n), nil
 }
 
-func parseSquare(sq string) (int, error) {
+func parseSquare(sq string) (base.Square, error) {
 	if len(sq) != 2 {
 		return base.NONE, ErrFENSquareInvalid
 	}
 	r, f := sq[0], sq[1]
 	rank, file := r-97, 8-(f-48)
 
-	idx := int(rank + file*8)
+	idx := base.Square(rank + file*8)
 	if idx < 0 || idx > 63 {
 		return base.NONE, ErrFENSquareInvalid
 	}

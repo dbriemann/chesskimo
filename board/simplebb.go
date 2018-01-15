@@ -2,18 +2,19 @@ package board
 
 import (
 	"fmt"
+	"strconv"
 
-	"github.com/zensword/chesskimo/base"
-	"github.com/zensword/chesskimo/fen"
+	"github.com/dbriemann/chesskimo/base"
+	"github.com/dbriemann/chesskimo/fen"
 )
 
 // SimpleBB implements a chess game board state with 'kindergarten' bitboards.
 type SimpleBB struct {
-	bbPiecesByColor [2]uint64
-	bbPiecesByType  [6]uint64
-	kings           [2]uint8
-	enPassentSquare uint8
-	drawCounter     uint8
+	bbPiecesByColor [2]base.BB
+	bbPiecesByType  [6]base.BB
+	kings           [2]base.Square
+	enPassentSquare base.Square
+	drawCounter     uint16
 	moveNumber      uint16
 	player          base.Color
 	castleShort     [2]bool
@@ -30,6 +31,54 @@ func NewRootBB() SimpleBB {
 	return bb
 }
 
+func (bb *SimpleBB) String() string {
+	str := ""
+	rank := 8
+	str += "\n +--------+"
+	for idx := base.Square(0); idx < 64; idx++ {
+		if idx%8 == 0 {
+			str += "\n" + strconv.Itoa(rank) + "|"
+			rank--
+		}
+		p := bb.getIdx(idx)
+		switch p {
+		case base.WPAWN:
+			str += "P"
+		case base.WKNIGHT:
+			str += "N"
+		case base.WBISHOP:
+			str += "B"
+		case base.WROOK:
+			str += "R"
+		case base.WQUEEN:
+			str += "Q"
+		case base.WKING:
+			str += "K"
+		case base.BPAWN:
+			str += "p"
+		case base.BKNIGHT:
+			str += "n"
+		case base.BBISHOP:
+			str += "b"
+		case base.BROOK:
+			str += "r"
+		case base.BQUEEN:
+			str += "q"
+		case base.BKING:
+			str += "k"
+		default:
+			str += "."
+		}
+		if idx%8 == 7 {
+			str += "|"
+		}
+	}
+	str += "\n +--------+"
+	str += "\n  abcdefgh\n"
+
+	return str
+}
+
 // SetStartingPosition sets the starting position of a default chess game via FEN code.
 func (bb *SimpleBB) SetStartingPosition() {
 	err := bb.SetFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
@@ -41,6 +90,52 @@ func (bb *SimpleBB) SetStartingPosition() {
 // func (bb *SimpleBB) GetSquare(file, rank base.Square) {
 
 // }
+
+func (bb *SimpleBB) setSquare(file, rank base.Square, piece base.Piece) {
+	bit := 8*rank + file
+	bb.setIdx(bit, piece)
+}
+
+func (bb *SimpleBB) getIdx(idx base.Square) base.Piece {
+	mask := base.IdxBitmask(base.BB(idx))
+	black := bb.bbPiecesByColor[base.BLACK] & mask
+	colorOffset := 0
+	piece := base.EMPTY
+
+	if black != 0 {
+		colorOffset = base.MASK_COLOR
+	}
+
+	for p := base.PAWN; p <= base.KING; p++ {
+		if (bb.bbPiecesByType[p] & mask) != 0 {
+			piece = p
+			break
+		}
+	}
+
+	return piece | base.Piece(colorOffset)
+}
+
+func (bb *SimpleBB) setIdx(idx base.Square, piece base.Piece) {
+	if piece == base.EMPTY {
+		// If the square is empty, delete all bits in all corresponding masks.
+		rmask := ^base.IdxBitmask(base.BB(idx))
+		bb.bbPiecesByColor[base.WHITE] &= rmask
+		bb.bbPiecesByColor[base.BLACK] &= rmask
+		for p := base.PAWN; p <= base.KING; p++ {
+			bb.bbPiecesByType[p] &= rmask
+		}
+	} else {
+		// Else add the specific bit to the corresponding masks.
+		amask := base.IdxBitmask(base.BB(idx))
+		bb.bbPiecesByType[piece&base.MASK_PIECE] |= amask
+		color := (piece & base.MASK_COLOR) >> 3
+		bb.bbPiecesByColor[color] |= amask
+		if (piece & base.MASK_PIECE) == base.KING {
+			bb.kings[color] = idx
+		}
+	}
+}
 
 // SetFEN sets a chess position from a 'FEN' string.
 func (bb *SimpleBB) SetFEN(fenstr string) error {
@@ -76,11 +171,11 @@ func (bb *SimpleBB) SetFEN(fenstr string) error {
 	fmt.Println("EP", epSq)
 
 	// Extract half moves since last capture or pawn movement.
-	halfMove, err := fen.ParseMoveNumber(fields[4])
+	halfMoves, err := fen.ParseMoveNumber(fields[4])
 	if err != nil {
 		return err
 	}
-	fmt.Println("HALF-MOVE", halfMove)
+	fmt.Println("HALF-MOVE", halfMoves)
 
 	// Extract full move number.
 	moveNum, err := fen.ParseMoveNumber(fields[5])
@@ -88,6 +183,17 @@ func (bb *SimpleBB) SetFEN(fenstr string) error {
 		return err
 	}
 	fmt.Println("MOVE", moveNum)
+
+	// No error encountered -> set all members.
+	bb.moveNumber = moveNum
+	bb.drawCounter = halfMoves
+	bb.enPassentSquare = epSq
+	bb.castleLong = long
+	bb.castleShort = short
+	bb.player = color
+	for idx, piece := range pieces {
+		bb.setIdx(base.Square(idx), piece)
+	}
 
 	return nil
 }

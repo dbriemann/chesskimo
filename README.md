@@ -1,5 +1,5 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/zensword/chesskimo)](https://goreportcard.com/report/github.com/zensword/chesskimo)
-[![GoDoc](https://godoc.org/github.com/zensword/chesskimo?status.svg)](https://godoc.org/github.com/zensword/chesskimo)
+[![Go Report Card](https://goreportcard.com/badge/github.com/dbriemann/chesskimo)](https://goreportcard.com/report/github.com/dbriemann/chesskimo)
+[![GoDoc](https://godoc.org/github.com/dbriemann/chesskimo?status.svg)](https://godoc.org/github.com/dbriemann/chesskimo)
 
 # chesskimo
 Chess engine written in Go

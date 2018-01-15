@@ -5,6 +5,7 @@ package base
 type Color uint8
 type Piece int
 type Square uint8
+type BB uint64
 
 const (
 	// various
@@ -31,7 +32,7 @@ const (
 	RANK_8 = 0xFF00000000000000
 
 	// bitmask for both en passent ranks
-	EP_RANKS = 0x0000FF0000FF0000
+	EP_RANKS = RANK_3 | RANK_6 //0x0000FF0000FF0000
 )
 const (
 	// colors
@@ -47,6 +48,11 @@ const (
 	ROOK                // 3
 	QUEEN               // 4
 	KING                // 5
+)
+
+const (
+	MASK_PIECE = 0x7
+	MASK_COLOR = 0x8
 )
 
 const (
@@ -66,3 +72,7 @@ const (
 	BQUEEN               // 12
 	BKING                // 13
 )
+
+func IdxBitmask(i BB) BB {
+	return 1 << i
+}
