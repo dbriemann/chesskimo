@@ -1,7 +1,6 @@
 package board
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/dbriemann/chesskimo/base"
@@ -87,13 +86,14 @@ func (bb *SimpleBB) SetStartingPosition() {
 	}
 }
 
-// func (bb *SimpleBB) GetSquare(file, rank base.Square) {
-
-// }
+func (bb *SimpleBB) getSquare(file, rank base.Square) base.Piece {
+	idx := 8*rank + file
+	return bb.getIdx(idx)
+}
 
 func (bb *SimpleBB) setSquare(file, rank base.Square, piece base.Piece) {
-	bit := 8*rank + file
-	bb.setIdx(bit, piece)
+	idx := 8*rank + file
+	bb.setIdx(idx, piece)
 }
 
 func (bb *SimpleBB) getIdx(idx base.Square) base.Piece {
@@ -150,41 +150,35 @@ func (bb *SimpleBB) SetFEN(fenstr string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("PIECES", pieces)
 
 	// Extract active color.
 	color, err := fen.ParseColor(fields[1])
 	if err != nil {
 		return err
 	}
-	fmt.Println("COLOR", color)
 
 	// Extract castling rights.
 	short, long := fen.ParseCastlingRights(fields[2])
-	fmt.Println("CASTLE", short, long)
 
 	// Extract en passent target square.
 	epSq, err := fen.ParseEnPassent(fields[3])
 	if err != nil {
 		return err
 	}
-	fmt.Println("EP", epSq)
 
 	// Extract half moves since last capture or pawn movement.
 	halfMoves, err := fen.ParseMoveNumber(fields[4])
 	if err != nil {
 		return err
 	}
-	fmt.Println("HALF-MOVE", halfMoves)
 
 	// Extract full move number.
 	moveNum, err := fen.ParseMoveNumber(fields[5])
 	if err != nil {
 		return err
 	}
-	fmt.Println("MOVE", moveNum)
 
-	// No error encountered -> set all members.
+	// No error encountered -> set all members of the board instance.
 	bb.moveNumber = moveNum
 	bb.drawCounter = halfMoves
 	bb.enPassentSquare = epSq
