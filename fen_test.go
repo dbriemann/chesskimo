@@ -1,9 +1,7 @@
-package fen
+package chesskimo
 
 import (
 	"testing"
-
-	"github.com/dbriemann/chesskimo/base"
 )
 
 // TestSplitOK tests if the SplitFields function behaves correctly.

@@ -1,12 +1,9 @@
-// Package fen provides basic functionality to decode and encode FEN strings.
-package fen
+package chesskimo
 
 import (
 	"errors"
 	"strconv"
 	"strings"
-
-	"github.com/dbriemann/chesskimo/base"
 )
 
 var (
@@ -22,20 +19,20 @@ var (
 	ErrFENMoveNumInvalid = errors.New("FEN has invalid move number")
 
 	// FENMap maps FEN piece symbols (plus empty ' ') to the internal definition.
-	FENMap = map[rune]base.Piece{
-		'P': base.WPAWN,
-		'N': base.WKNIGHT,
-		'B': base.WBISHOP,
-		'R': base.WROOK,
-		'Q': base.WQUEEN,
-		'K': base.WKING,
-		'p': base.BPAWN,
-		'n': base.BKNIGHT,
-		'b': base.BBISHOP,
-		'r': base.BROOK,
-		'q': base.BQUEEN,
-		'k': base.BKING,
-		' ': base.EMPTY,
+	FENMap = map[rune]Piece{
+		'P': WPAWN,
+		'N': WKNIGHT,
+		'B': WBISHOP,
+		'R': WROOK,
+		'Q': WQUEEN,
+		'K': WKING,
+		'p': BPAWN,
+		'n': BKNIGHT,
+		'b': BBISHOP,
+		'r': BROOK,
+		'q': BQUEEN,
+		'k': BKING,
+		' ': EMPTY,
 	}
 )
 
@@ -56,6 +53,59 @@ var (
 
 // 	return true
 // }
+
+func ParseFEN(fen string) (MinBoard, error) {
+	mb := MinBoard{}
+
+	// Extract fields.
+	fields, err := SplitFields(fen)
+	if err != nil {
+		return mb, err
+	}
+
+	// Extract piece positions.
+	pieces, err := ParsePieces(fields[0])
+	if err != nil {
+		return mb, err
+	}
+
+	// Extract active color.
+	color, err := ParseColor(fields[1])
+	if err != nil {
+		return mb, err
+	}
+
+	// Extract castling rights.
+	short, long := ParseCastlingRights(fields[2])
+
+	// Extract en passent target square.
+	epSq, err := ParseEnPassent(fields[3])
+	if err != nil {
+		return mb, err
+	}
+
+	// Extract half moves since last capture or pawn movement.
+	halfMoves, err := ParseMoveNumber(fields[4])
+	if err != nil {
+		return mb, err
+	}
+
+	// Extract full move number.
+	moveNum, err := ParseMoveNumber(fields[5])
+	if err != nil {
+		return mb, err
+	}
+
+	mb.Squares = pieces
+	mb.Color = color
+	mb.CastleShort = short
+	mb.CastleLong = long
+	mb.EpSquare = epSq
+	mb.HalfMoves = halfMoves
+	mb.MoveNum = moveNum
+
+	return mb, nil
+}
 
 // SplitFields splits a FEN into its fields and returns them separated into a slice,
 // or an error if the amount of fields is not equal 6.
@@ -85,8 +135,8 @@ func SplitFields(fen string) ([]string, error) {
 // 1|56,..         64] <- array index 63 is white rook @ H1
 //  +-----------------
 //
-func ParsePieces(pieces string) ([64]base.Piece, error) {
-	board := [64]base.Piece{}
+func ParsePieces(pieces string) ([64]Piece, error) {
+	board := [64]Piece{}
 
 	// Remove all '/' from the encoded string.
 	pieces = strings.Replace(pieces, "/", "", 8)
@@ -118,13 +168,13 @@ func ParsePieces(pieces string) ([64]base.Piece, error) {
 }
 
 // ParseColor parses the active color from the 'color' string.
-func ParseColor(color string) (base.Color, error) {
+func ParseColor(color string) (Color, error) {
 	// color = strings.ToLower(color)
 	switch color {
 	case "w":
-		return base.WHITE, nil
+		return WHITE, nil
 	case "b":
-		return base.BLACK, nil
+		return BLACK, nil
 	default:
 		return 0, ErrFENColorInvalid
 	}
@@ -143,9 +193,9 @@ func ParseCastlingRights(castle string) ([2]bool, [2]bool) {
 }
 
 // ParseEnPassent parses the current possible en passent capture square, if there is one.
-func ParseEnPassent(ep string) (base.Square, error) {
+func ParseEnPassent(ep string) (Square, error) {
 	if ep == "-" {
-		return base.NONE, nil
+		return NONE, nil
 	}
 	sq, err := parseSquare(ep)
 	return sq, err
@@ -164,16 +214,16 @@ func ParseMoveNumber(num string) (uint16, error) {
 	return uint16(n), nil
 }
 
-func parseSquare(sq string) (base.Square, error) {
+func parseSquare(sq string) (Square, error) {
 	if len(sq) != 2 {
-		return base.NONE, ErrFENSquareInvalid
+		return NONE, ErrFENSquareInvalid
 	}
 	r, f := sq[0], sq[1]
 	rank, file := r-97, 8-(f-48)
 
-	idx := base.Square(rank + file*8)
+	idx := Square(rank + file*8)
 	if idx < 0 || idx > 63 {
-		return base.NONE, ErrFENSquareInvalid
+		return NONE, ErrFENSquareInvalid
 	}
 
 	return idx, nil
