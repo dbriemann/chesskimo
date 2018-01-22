@@ -10,16 +10,16 @@ func TestSplitFields(t *testing.T) {
 	lessThanSixFields := "1   2  3  4"
 	moreThanSixFields := "1 2 3 4 5 6 7 8"
 
-	_, err1 := SplitFields(sixFields)
+	_, err1 := splitFENFields(sixFields)
 	if err1 != nil {
 		t.Fatalf("Expected pass, split FEN is %s\n", sixFields)
 	}
-	_, err2 := SplitFields(lessThanSixFields)
+	_, err2 := splitFENFields(lessThanSixFields)
 	if err2 == nil {
 		t.Fatalf("Expected fail, split FEN is %s\n", lessThanSixFields)
 	}
 
-	_, err3 := SplitFields(moreThanSixFields)
+	_, err3 := splitFENFields(moreThanSixFields)
 	if err3 == nil {
 		t.Fatalf("Expected fail, split FEN is %s\n", moreThanSixFields)
 	}
@@ -43,7 +43,7 @@ func TestParsePieces(t *testing.T) {
 
 	// Should succeed.
 	for _, s := range valid {
-		_, err := ParsePieces(s)
+		_, err := parseFENPieces(s)
 		if err != nil {
 			t.Fatalf("Expected pass, pieces FEN is %s\n", s)
 		}
@@ -51,7 +51,7 @@ func TestParsePieces(t *testing.T) {
 
 	// Should fail.
 	for _, s := range invalid {
-		_, err := ParsePieces(s)
+		_, err := parseFENPieces(s)
 		if err == nil {
 			t.Fatalf("Expected fail, pieces FEN is %s\n", s)
 		}
@@ -68,7 +68,7 @@ func TestParseColor(t *testing.T) {
 
 	// Should succeed.
 	for s, col := range valid {
-		c, err := ParseColor(s)
+		c, err := parseFENColor(s)
 		if err != nil || c != col {
 			t.Fatalf("Expected pass, color FEN is: %s\n", s)
 		}
@@ -76,7 +76,7 @@ func TestParseColor(t *testing.T) {
 
 	// Should fail.
 	for _, s := range invalid {
-		_, err := ParseColor(s)
+		_, err := parseFENColor(s)
 		if err == nil {
 			t.Fatalf("Expected fail, color FEN i: %s\n", s)
 		}
@@ -97,7 +97,7 @@ func TestParseCastlingRights(t *testing.T) {
 	}
 
 	for s, r := range tests {
-		short, long := ParseCastlingRights(s)
+		short, long := parseFENCastlingRights(s)
 		if r[0] != short || r[1] != long {
 			t.Fatalf("Expected %v, %v, but got %v -> castling FEN is %s\n", short, long, r, s)
 		}
@@ -108,12 +108,12 @@ func TestParseCastlingRights(t *testing.T) {
 // Also tests parseSquare.
 func TestParseEnPassent(t *testing.T) {
 	// No en passent square.
-	sq, err := ParseEnPassent("-")
+	sq, err := parseFENEnPassent("-")
 	if err != nil || sq != base.NONE {
 		t.Fatalf("Expected pass, en passent FEN is: %s\n", "-")
 	}
 	// Alibi call.
-	_, err = ParseEnPassent(" ")
+	_, err = parseFENEnPassent(" ")
 	if err == nil {
 		t.Fatalf("Expected fail, en passent FEN is: %s\n", "-")
 	}
@@ -131,7 +131,7 @@ func TestParseEnPassent(t *testing.T) {
 	}
 
 	for s, i := range squares {
-		sq, err = parseSquare(s)
+		sq, err = parseFENSquare(s)
 		if err != nil || sq != i {
 			t.Fatalf("Expected pass for square FEN: %s\n", s)
 		}
@@ -141,7 +141,7 @@ func TestParseEnPassent(t *testing.T) {
 	// TODO: e.g. "z7"
 	nonSquares := []string{"h0", "aa3", "", "a", "k55"}
 	for _, s := range nonSquares {
-		sq, err = parseSquare(s)
+		sq, err = parseFENSquare(s)
 		if err == nil {
 			t.Fatalf("Expected fail for square FEN: %s but got SQ: %d\n", s, sq)
 		}
@@ -152,7 +152,7 @@ func TestParseEnPassent(t *testing.T) {
 func TestParseMoveNumber(t *testing.T) {
 	fails := []string{"-1", "44231"}
 	for _, n := range fails {
-		num, err := ParseMoveNumber(n)
+		num, err := parseFENMoveNumber(n)
 		if err == nil {
 			t.Fatalf("Expected fail for move number FEN: %s but got NUM: %d\n", n, num)
 		}
@@ -160,7 +160,7 @@ func TestParseMoveNumber(t *testing.T) {
 
 	succeeds := []string{"0", "11", "25001"}
 	for _, n := range succeeds {
-		_, err := ParseMoveNumber(n)
+		_, err := parseFENMoveNumber(n)
 		if err != nil {
 			t.Fatalf("Expected pass for move number FEN: %s but got ERR: %s\n", n, err.Error())
 		}

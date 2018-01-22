@@ -58,40 +58,40 @@ func ParseFEN(fen string) (MinBoard, error) {
 	mb := MinBoard{}
 
 	// Extract fields.
-	fields, err := SplitFields(fen)
+	fields, err := splitFENFields(fen)
 	if err != nil {
 		return mb, err
 	}
 
 	// Extract piece positions.
-	pieces, err := ParsePieces(fields[0])
+	pieces, err := parseFENPieces(fields[0])
 	if err != nil {
 		return mb, err
 	}
 
 	// Extract active color.
-	color, err := ParseColor(fields[1])
+	color, err := parseFENColor(fields[1])
 	if err != nil {
 		return mb, err
 	}
 
 	// Extract castling rights.
-	short, long := ParseCastlingRights(fields[2])
+	short, long := parseFENCastlingRights(fields[2])
 
 	// Extract en passent target square.
-	epSq, err := ParseEnPassent(fields[3])
+	epSq, err := parseFENEnPassent(fields[3])
 	if err != nil {
 		return mb, err
 	}
 
 	// Extract half moves since last capture or pawn movement.
-	halfMoves, err := ParseMoveNumber(fields[4])
+	halfMoves, err := parseFENMoveNumber(fields[4])
 	if err != nil {
 		return mb, err
 	}
 
 	// Extract full move number.
-	moveNum, err := ParseMoveNumber(fields[5])
+	moveNum, err := parseFENMoveNumber(fields[5])
 	if err != nil {
 		return mb, err
 	}
@@ -109,7 +109,7 @@ func ParseFEN(fen string) (MinBoard, error) {
 
 // SplitFields splits a FEN into its fields and returns them separated into a slice,
 // or an error if the amount of fields is not equal 6.
-func SplitFields(fen string) ([]string, error) {
+func splitFENFields(fen string) ([]string, error) {
 	// Split for any number of whitespaces. Is fault tolerant to some malformed FENs.
 	fields := strings.Fields(fen)
 	if len(fields) != 6 {
@@ -125,21 +125,28 @@ func SplitFields(fen string) ([]string, error) {
 //
 //    a b c d e f g h
 //  +----------------
-// 8|[0,1,2,3,4,5,6,7, <- array index 0 is black rook @ A8
-// 7| 8,..
-// 6|16,..
-// 5|24,..
-// 4|32,..
-// 3|40,..
-// 2|48,..
-// 1|56,..         64] <- array index 63 is white rook @ H1
+// 8|56,..         63] <- array index 63 is black rook @ H8
+// 7|48,..
+// 6|40,..
+// 5|32,..
+// 4|24,..
+// 3|16,..
+// 2| 8,..
+// 1|[0,1,2,3,4,5,6,7, <- array index 0 is white rook @ A1
 //  +-----------------
 //
-func ParsePieces(pieces string) ([64]Piece, error) {
+func parseFENPieces(pieces string) ([64]Piece, error) {
 	board := [64]Piece{}
 
-	// Remove all '/' from the encoded string.
-	pieces = strings.Replace(pieces, "/", "", 8)
+	// Reverse ranks to transform from FEN to internal representation.
+	ranks := strings.Split(pieces, "/")
+	ranks[0], ranks[7] = ranks[7], ranks[0]
+	ranks[1], ranks[6] = ranks[6], ranks[1]
+	ranks[2], ranks[5] = ranks[5], ranks[2]
+	ranks[3], ranks[4] = ranks[4], ranks[3]
+
+	// Put it back together so old code below can just continue to work.
+	pieces = ranks[0] + ranks[1] + ranks[2] + ranks[3] + ranks[4] + ranks[5] + ranks[6] + ranks[7]
 
 	// Replace numbers with an equal amount of spaces
 	// so we have 64 characters in total, mapping to
@@ -168,7 +175,7 @@ func ParsePieces(pieces string) ([64]Piece, error) {
 }
 
 // ParseColor parses the active color from the 'color' string.
-func ParseColor(color string) (Color, error) {
+func parseFENColor(color string) (Color, error) {
 	// color = strings.ToLower(color)
 	switch color {
 	case "w":
@@ -183,7 +190,7 @@ func ParseColor(color string) (Color, error) {
 // ParseCastlingRights parses which player still has rights to castle short and long.
 // The returned arrays describe the castling rights as follows:
 // short:[WHITE, BLACK], long:[WHITE, BLACK]
-func ParseCastlingRights(castle string) ([2]bool, [2]bool) {
+func parseFENCastlingRights(castle string) ([2]bool, [2]bool) {
 	short := [2]bool{strings.Contains(castle, "K"), strings.Contains(castle, "k")}
 	long := [2]bool{strings.Contains(castle, "Q"), strings.Contains(castle, "q")}
 
@@ -193,16 +200,16 @@ func ParseCastlingRights(castle string) ([2]bool, [2]bool) {
 }
 
 // ParseEnPassent parses the current possible en passent capture square, if there is one.
-func ParseEnPassent(ep string) (Square, error) {
+func parseFENEnPassent(ep string) (Square, error) {
 	if ep == "-" {
 		return NONE, nil
 	}
-	sq, err := parseSquare(ep)
+	sq, err := parseFENSquare(ep)
 	return sq, err
 }
 
 // ParseMoveNumber parses a move number from the 'num' string.
-func ParseMoveNumber(num string) (uint16, error) {
+func parseFENMoveNumber(num string) (uint16, error) {
 	n, err := strconv.ParseInt(num, 10, 16)
 	if err != nil {
 		return 0, err
@@ -214,7 +221,7 @@ func ParseMoveNumber(num string) (uint16, error) {
 	return uint16(n), nil
 }
 
-func parseSquare(sq string) (Square, error) {
+func parseFENSquare(sq string) (Square, error) {
 	if len(sq) != 2 {
 		return NONE, ErrFENSquareInvalid
 	}
