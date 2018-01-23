@@ -1,5 +1,7 @@
 package chesskimo
 
+import "strconv"
+
 // Board contains all information for a chess board state, including the board itself as 0x88 board.
 //  +------------------------+
 //8 |70 71 72 73 74 75 76 77 | 78 79 7a 7b 7c 7d 7e 7f
@@ -15,7 +17,7 @@ package chesskimo
 // All indexes shown are in HEX. The left board represents the actual playing board, whereas there right board
 // is for detection of illegal moves without heavy conditional usage.
 type Board struct {
-	Field       [64 * 2]Piece
+	Squares     [64 * 2]Piece
 	Kings       [2]Square
 	CastleShort [2]bool
 	CastleLong  [2]bool
@@ -40,6 +42,7 @@ var Lookup0x88 = [64]Square{
 
 func NewBoard() Board {
 	b := Board{}
+	b.SetStartingPosition()
 	return b
 }
 
@@ -66,32 +69,42 @@ func (b *Board) SetFEN(fen string) error {
 	b.CastleLong = mb.CastleLong
 	b.Player = mb.Color
 	for idx, piece := range mb.Squares {
-		b.Field[Lookup0x88[idx]] = piece
+		sq := Lookup0x88[idx]
+		b.Squares[sq] = piece
+		if piece == BKING {
+			b.Kings[BLACK] = sq
+		} else if piece == WKING {
+			b.Kings[WHITE] = sq
+		}
 	}
 
 	return nil
 }
 
 func (b *Board) String() string {
-	str := ""
+	str := "  +-----------------+\n"
 
 	for r := 7; r >= 0; r-- {
+		str += strconv.Itoa(r+1) + " | "
 		for f := 0; f < 8; f++ {
 			idx := 16*r + f
-			str += PrintMap[b.Field[idx]]
+			str += PrintMap[b.Squares[idx]] + " "
 			if f == 7 {
-				str += "\n"
+				str += "|\n"
 			}
-			// Convert index to HEX.
-			//			hexi := fmt.Sprintf("%x", i)
-			//			trick := hexi[len(hexi)-1]
-			//			if trick <= '7' {
-			//				str += PrintMap[b.Field[i]]
-			//			} else if trick == '8' {
-			//				str += "\n"
-			//			}
 		}
 	}
+	str += "  +-----------------+\n"
+	str += "    a b c d e f g h\n"
 
 	return str
+}
+
+func (sq Square) isLegal() bool {
+	return (sq & 0x88) == 0
+}
+
+func (sq Square) color() Color {
+	// Black squares have an even index, White squares have an odd one.
+	return Color(sq) & 1
 }
