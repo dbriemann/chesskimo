@@ -25,20 +25,22 @@ import (
 // is for detection of illegal moves without heavy conditional usage.
 type Board struct {
 	Squares     [64 * 2]base.Piece
-	Kings       [2]base.Square
-	Queens      [2][]base.Square
-	Rooks       [2][]base.Square
-	Bishops     [2][]base.Square
-	Knights     [2][]base.Square
-	Pawns       [2][]base.Square
 	CastleShort [2]bool
 	CastleLong  [2]bool
 	IsCheck     bool
 	EpSquare    base.Square
+	Player      base.Color
 	MoveNumber  uint16
 	DrawCounter uint16
-	Player      base.Color
+	Kings       [2]base.Square
+	Queens      [2]base.PieceList
+	Rooks       [2]base.PieceList
+	Bishops     [2]base.PieceList
+	Knights     [2]base.PieceList
+	Pawns       [2]base.PieceList
 }
+
+const ()
 
 // Lookup0x88 maps the indexes of a 8x8 MinBoard to the 0x88 board indexes.
 var Lookup0x88 = [64]base.Square{
@@ -54,8 +56,12 @@ var Lookup0x88 = [64]base.Square{
 
 func NewBoard() Board {
 	b := Board{}
-	b.Queens = [2][]base.Square{}
-	b.Rooks = [2][]base.Square{}
+	b.Kings = [2]base.Square{base.OTB, base.OTB}
+	b.Queens = [2]base.PieceList{base.NewPieceList(9)}
+	b.Rooks = [2]base.PieceList{base.NewPieceList(10)}
+	b.Bishops = [2]base.PieceList{base.NewPieceList(10)}
+	b.Knights = [2]base.PieceList{base.NewPieceList(10)}
+	b.Pawns = [2]base.PieceList{base.NewPieceList(8)}
 
 	b.SetStartingPosition()
 	return b
@@ -69,7 +75,9 @@ func (b *Board) SetStartingPosition() {
 	}
 }
 
-// SetFEN sets a chess position from a 'FEN' string.
+// SetFEN sets a chess position from a 'FEN' string. This function is expensive
+// in terms of computation time. It should only be used in non performance critical
+// code such as setting up states etc.
 func (b *Board) SetFEN(fenstr string) error {
 	mb, err := fen.ParseFEN(fenstr)
 	if err != nil {
@@ -91,6 +99,26 @@ func (b *Board) SetFEN(fenstr string) error {
 			b.Kings[base.WHITE] = sq
 		case base.BKING:
 			b.Kings[base.BLACK] = sq
+		case base.WQUEEN:
+			b.Queens[base.WHITE].Add(sq)
+		case base.BQUEEN:
+			b.Queens[base.BLACK].Add(sq)
+		case base.WROOK:
+			b.Rooks[base.WHITE].Add(sq)
+		case base.BROOK:
+			b.Rooks[base.BLACK].Add(sq)
+		case base.WBISHOP:
+			b.Bishops[base.WHITE].Add(sq)
+		case base.BBISHOP:
+			b.Bishops[base.BLACK].Add(sq)
+		case base.WKNIGHT:
+			b.Knights[base.WHITE].Add(sq)
+		case base.BKNIGHT:
+			b.Knights[base.BLACK].Add(sq)
+		case base.WPAWN:
+			b.Pawns[base.WHITE].Add(sq)
+		case base.BPAWN:
+			b.Pawns[base.BLACK].Add(sq)
 		}
 	}
 

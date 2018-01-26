@@ -7,6 +7,9 @@ type Square uint8
 const (
 	// various
 	NONE = 0
+
+	// OTB is off the board and used as a non-index in piece lists.
+	OTB = 0x7F
 )
 
 const (

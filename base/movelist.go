@@ -5,7 +5,7 @@ const (
 )
 
 type MoveList struct {
-	size  int
+	size  uint16
 	moves [max_moves]Move
 }
 
@@ -19,6 +19,6 @@ func (ml *MoveList) Put(m Move) {
 	ml.size++
 }
 
-func (ml *MoveList) Get(n int) Move {
+func (ml *MoveList) Get(n uint16) Move {
 	return ml.moves[n]
 }
