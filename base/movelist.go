@@ -1,4 +1,4 @@
-package chesskimo
+package base
 
 const (
 	max_moves = 512

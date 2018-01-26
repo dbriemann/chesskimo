@@ -1,4 +1,4 @@
-package chesskimo
+package base
 
 type Color uint8
 type Piece uint8
@@ -59,3 +59,12 @@ var (
 		EMPTY:   ".",
 	}
 )
+
+func (sq Square) isLegal() bool {
+	return (sq & 0x88) == 0
+}
+
+func (sq Square) color() Color {
+	// Black squares have an even index, White squares have an odd one.
+	return Color(sq) & 1
+}

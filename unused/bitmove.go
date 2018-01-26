@@ -1,6 +1,6 @@
-package chesskimo
+package unused
 
-type Move uint32
+type BitMove uint32
 
 const (
 	FROM_SHIFT      = 0
@@ -13,7 +13,7 @@ const (
 	VALUE_SHIFT     = 28
 )
 
-func NewMove(from, to, ptype, capflag, promtype, eptype, castleflag, value Move) Move {
+func NewBitMove(from, to, ptype, capflag, promtype, eptype, castleflag, value BitMove) BitMove {
 	m := from
 	to <<= TO_SHIFT
 	ptype <<= PIECE_SHIFT
@@ -27,17 +27,17 @@ func NewMove(from, to, ptype, capflag, promtype, eptype, castleflag, value Move)
 	return m
 }
 
-func (m *Move) SetFeature(mask, shift, bits Move) {
+func (m *BitMove) SetFeature(mask, shift, bits BitMove) {
 	*m &= ^mask
 	bits <<= shift
 	*m |= bits
 }
 
-func (m *Move) GetFeature(mask, shift Move) Move {
+func (m *BitMove) GetFeature(mask, shift BitMove) BitMove {
 	return (*m & mask) >> shift
 }
 
-func (m Move) String() string {
+func (m BitMove) String() string {
 	str := ""
 	// TODO
 	return str

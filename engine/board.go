@@ -1,35 +1,47 @@
-package chesskimo
+package engine
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/dbriemann/chesskimo/base"
+	"github.com/dbriemann/chesskimo/fen"
+)
 
 // Board contains all information for a chess board state, including the board itself as 0x88 board.
-//  +------------------------+
-//8 |70 71 72 73 74 75 76 77 | 78 79 7a 7b 7c 7d 7e 7f
-//7 |60 61 62 63 64 65 66 67 | 68 69 6a 6b 6c 6d 6e 6f
-//6 |50 51 52 53 54 55 56 57 | 58 59 5a 5b 5c 5d 5e 5f
-//5 |40 41 42 43 44 45 46 47 | 48 49 4a 4b 4c 4d 4e 4f
-//4 |30 31 32 33 34 35 36 37 | 38 39 3a 3b 3c 3d 3e 3f
-//3 |20 21 22 23 24 25 26 27 | 28 29 2a 2b 2c 2d 2e 2f
-//2 |10 11 12 13 14 15 16 17 | 18 19 1a 1b 1c 1d 1e 1f
-//1 | 0  1  2  3  4  5  6  7 |  8  9  a  b  c  d  e  f
-//  +------------------------+
-//    a  b  c  d  e  f  g  h |
+//
+//   +------------------------+
+// 8 |70 71 72 73 74 75 76 77 | 78 79 7a 7b 7c 7d 7e 7f
+// 7 |60 61 62 63 64 65 66 67 | 68 69 6a 6b 6c 6d 6e 6f
+// 6 |50 51 52 53 54 55 56 57 | 58 59 5a 5b 5c 5d 5e 5f
+// 5 |40 41 42 43 44 45 46 47 | 48 49 4a 4b 4c 4d 4e 4f
+// 4 |30 31 32 33 34 35 36 37 | 38 39 3a 3b 3c 3d 3e 3f
+// 3 |20 21 22 23 24 25 26 27 | 28 29 2a 2b 2c 2d 2e 2f
+// 2 |10 11 12 13 14 15 16 17 | 18 19 1a 1b 1c 1d 1e 1f
+// 1 | 0  1  2  3  4  5  6  7 |  8  9  a  b  c  d  e  f
+//   +------------------------+
+//     a  b  c  d  e  f  g  h
+//
 // All indexes shown are in HEX. The left board represents the actual playing board, whereas there right board
 // is for detection of illegal moves without heavy conditional usage.
 type Board struct {
-	Squares     [64 * 2]Piece
-	Kings       [2]Square
+	Squares     [64 * 2]base.Piece
+	Kings       [2]base.Square
+	Queens      [2][]base.Square
+	Rooks       [2][]base.Square
+	Bishops     [2][]base.Square
+	Knights     [2][]base.Square
+	Pawns       [2][]base.Square
 	CastleShort [2]bool
 	CastleLong  [2]bool
 	IsCheck     bool
-	EpSquare    Square
+	EpSquare    base.Square
 	MoveNumber  uint16
 	DrawCounter uint16
-	Player      Color
+	Player      base.Color
 }
 
 // Lookup0x88 maps the indexes of a 8x8 MinBoard to the 0x88 board indexes.
-var Lookup0x88 = [64]Square{
+var Lookup0x88 = [64]base.Square{
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
 	0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
@@ -42,6 +54,9 @@ var Lookup0x88 = [64]Square{
 
 func NewBoard() Board {
 	b := Board{}
+	b.Queens = [2][]base.Square{}
+	b.Rooks = [2][]base.Square{}
+
 	b.SetStartingPosition()
 	return b
 }
@@ -55,8 +70,8 @@ func (b *Board) SetStartingPosition() {
 }
 
 // SetFEN sets a chess position from a 'FEN' string.
-func (b *Board) SetFEN(fen string) error {
-	mb, err := ParseFEN(fen)
+func (b *Board) SetFEN(fenstr string) error {
+	mb, err := fen.ParseFEN(fenstr)
 	if err != nil {
 		panic(err)
 	}
@@ -64,17 +79,18 @@ func (b *Board) SetFEN(fen string) error {
 	// No error encountered -> set all members of the board instance.
 	b.MoveNumber = mb.MoveNum
 	b.DrawCounter = mb.HalfMoves
-	b.EpSquare = mb.EpSquare
+	b.EpSquare = Lookup0x88[mb.EpSquare]
 	b.CastleShort = mb.CastleShort
 	b.CastleLong = mb.CastleLong
 	b.Player = mb.Color
 	for idx, piece := range mb.Squares {
 		sq := Lookup0x88[idx]
 		b.Squares[sq] = piece
-		if piece == BKING {
-			b.Kings[BLACK] = sq
-		} else if piece == WKING {
-			b.Kings[WHITE] = sq
+		switch piece {
+		case base.WKING:
+			b.Kings[base.WHITE] = sq
+		case base.BKING:
+			b.Kings[base.BLACK] = sq
 		}
 	}
 
@@ -83,12 +99,11 @@ func (b *Board) SetFEN(fen string) error {
 
 func (b *Board) String() string {
 	str := "  +-----------------+\n"
-
 	for r := 7; r >= 0; r-- {
 		str += strconv.Itoa(r+1) + " | "
 		for f := 0; f < 8; f++ {
 			idx := 16*r + f
-			str += PrintMap[b.Squares[idx]] + " "
+			str += base.PrintMap[b.Squares[idx]] + " "
 			if f == 7 {
 				str += "|\n"
 			}
@@ -98,13 +113,4 @@ func (b *Board) String() string {
 	str += "    a b c d e f g h\n"
 
 	return str
-}
-
-func (sq Square) isLegal() bool {
-	return (sq & 0x88) == 0
-}
-
-func (sq Square) color() Color {
-	// Black squares have an even index, White squares have an odd one.
-	return Color(sq) & 1
 }

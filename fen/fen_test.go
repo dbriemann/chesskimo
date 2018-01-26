@@ -1,4 +1,4 @@
-package chesskimo
+package fen
 
 import (
 	"testing"
