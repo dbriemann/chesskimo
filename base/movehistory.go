@@ -4,21 +4,21 @@ const (
 	max_moves = 512
 )
 
-type MoveList struct {
+type MoveHistory struct {
 	size  uint16
 	moves [max_moves]Move
 }
 
-func (ml *MoveList) Reset() {
+func (ml *MoveHistory) Reset() {
 	ml.size = 0
 }
 
-func (ml *MoveList) Put(m Move) {
+func (ml *MoveHistory) Put(m Move) {
 	// TODO -- should we handle excess of 512 moves?
 	ml.moves[ml.size] = m
 	ml.size++
 }
 
-func (ml *MoveList) Get(n uint16) Move {
+func (ml *MoveHistory) Get(n uint16) Move {
 	return ml.moves[n]
 }

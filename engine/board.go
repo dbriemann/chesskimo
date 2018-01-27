@@ -57,11 +57,11 @@ var Lookup0x88 = [64]base.Square{
 func NewBoard() Board {
 	b := Board{}
 	b.Kings = [2]base.Square{base.OTB, base.OTB}
-	b.Queens = [2]base.PieceList{base.NewPieceList(9)}
-	b.Rooks = [2]base.PieceList{base.NewPieceList(10)}
-	b.Bishops = [2]base.PieceList{base.NewPieceList(10)}
-	b.Knights = [2]base.PieceList{base.NewPieceList(10)}
-	b.Pawns = [2]base.PieceList{base.NewPieceList(8)}
+	b.Queens = [2]base.PieceList{base.NewPieceList()}
+	b.Rooks = [2]base.PieceList{base.NewPieceList()}
+	b.Bishops = [2]base.PieceList{base.NewPieceList()}
+	b.Knights = [2]base.PieceList{base.NewPieceList()}
+	b.Pawns = [2]base.PieceList{base.NewPieceList()}
 
 	b.SetStartingPosition()
 	return b
@@ -82,6 +82,14 @@ func (b *Board) SetFEN(fenstr string) error {
 	mb, err := fen.ParseFEN(fenstr)
 	if err != nil {
 		panic(err)
+	}
+
+	for col := base.BLACK; col <= base.WHITE; col++ {
+		b.Queens[col].Clear()
+		b.Rooks[col].Clear()
+		b.Bishops[col].Clear()
+		b.Knights[col].Clear()
+		b.Pawns[col].Clear()
 	}
 
 	// No error encountered -> set all members of the board instance.
@@ -123,6 +131,15 @@ func (b *Board) SetFEN(fenstr string) error {
 	}
 
 	return nil
+}
+
+func (b *Board) GeneratePawnMoves(color base.Color) {
+	for i := uint8(0); i < b.Pawns[color].Size; i++ {
+		// 0. Retrieve from square from piece list.
+		from := b.Pawns[color].Pieces[i]
+		// 1. Try to advance the pawn by one.
+
+	}
 }
 
 func (b *Board) String() string {

@@ -63,11 +63,19 @@ var (
 	}
 )
 
-func (sq Square) isLegal() bool {
+func (sq Square) IsLegal() bool {
 	return (sq & 0x88) == 0
 }
 
-func (sq Square) color() Color {
+func (sq Square) Color() Color {
 	// Black squares have an even index, White squares have an odd one.
 	return Color(sq) & 1
+}
+
+func (sq Square) Rank() Square {
+	return sq >> 4
+}
+
+func (sq Square) File() Square {
+	return sq & 7
 }
