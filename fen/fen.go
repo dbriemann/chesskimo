@@ -142,6 +142,9 @@ func parseFENPieces(pieces string) ([64]base.Piece, error) {
 
 	// Reverse ranks to transform from FEN to internal representation.
 	ranks := strings.Split(pieces, "/")
+	if len(ranks) != 8 {
+		return board, ErrFENRanksInvalid
+	}
 	ranks[0], ranks[7] = ranks[7], ranks[0]
 	ranks[1], ranks[6] = ranks[6], ranks[1]
 	ranks[2], ranks[5] = ranks[5], ranks[2]
@@ -191,10 +194,10 @@ func parseFENColor(color string) (base.Color, error) {
 
 // ParseCastlingRights parses which player still has rights to castle short and long.
 // The returned arrays describe the castling rights as follows:
-// short:[WHITE, BLACK], long:[WHITE, BLACK]
+// short:[BLACK, WHITE], long:[BLACK, WHITE]
 func parseFENCastlingRights(castle string) ([2]bool, [2]bool) {
-	short := [2]bool{strings.Contains(castle, "K"), strings.Contains(castle, "k")}
-	long := [2]bool{strings.Contains(castle, "Q"), strings.Contains(castle, "q")}
+	short := [2]bool{strings.Contains(castle, "k"), strings.Contains(castle, "K")}
+	long := [2]bool{strings.Contains(castle, "q"), strings.Contains(castle, "Q")}
 
 	// Invalid characters are ignored and treated as if no player had castling rights.
 

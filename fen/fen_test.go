@@ -2,6 +2,8 @@ package fen
 
 import (
 	"testing"
+
+	"github.com/dbriemann/chesskimo/base"
 )
 
 // TestSplitOK tests if the SplitFields function behaves correctly.
@@ -87,10 +89,10 @@ func TestParseColor(t *testing.T) {
 func TestParseCastlingRights(t *testing.T) {
 	tests := map[string][][2]bool{
 		"KkQq": [][2]bool{[2]bool{true, true}, [2]bool{true, true}},
-		"KQq":  [][2]bool{[2]bool{true, false}, [2]bool{true, true}},
-		"kQq":  [][2]bool{[2]bool{false, true}, [2]bool{true, true}},
-		"Kkq":  [][2]bool{[2]bool{true, true}, [2]bool{false, true}},
-		"KkQ":  [][2]bool{[2]bool{true, true}, [2]bool{true, false}},
+		"KQq":  [][2]bool{[2]bool{false, true}, [2]bool{true, true}},
+		"kQq":  [][2]bool{[2]bool{true, false}, [2]bool{true, true}},
+		"Kkq":  [][2]bool{[2]bool{true, true}, [2]bool{true, false}},
+		"KkQ":  [][2]bool{[2]bool{true, true}, [2]bool{false, true}},
 		"Kk":   [][2]bool{[2]bool{true, true}, [2]bool{false, false}},
 		"Qq":   [][2]bool{[2]bool{false, false}, [2]bool{true, true}},
 		"-":    [][2]bool{[2]bool{false, false}, [2]bool{false, false}},
@@ -119,7 +121,7 @@ func TestParseEnPassent(t *testing.T) {
 	}
 
 	// Test parseSquare success for all squares.
-	squares := map[string]int{
+	squares := map[string]base.Square{
 		"a8": 0, "b8": 1, "c8": 2, "d8": 3, "e8": 4, "f8": 5, "g8": 6, "h8": 7,
 		"a7": 8, "b7": 9, "c7": 10, "d7": 11, "e7": 12, "f7": 13, "g7": 14, "h7": 15,
 		"a6": 16, "b6": 17, "c6": 18, "d6": 19, "e6": 20, "f6": 21, "g6": 22, "h6": 23,

@@ -84,7 +84,7 @@ func (b *Board) SetFEN(fenstr string) error {
 		panic(err)
 	}
 
-	for col := base.BLACK; col <= base.WHITE; col++ {
+	for col := base.BLACK_INDEX; col <= base.WHITE_INDEX; col++ {
 		b.Queens[col].Clear()
 		b.Rooks[col].Clear()
 		b.Bishops[col].Clear()
@@ -104,29 +104,29 @@ func (b *Board) SetFEN(fenstr string) error {
 		b.Squares[sq] = piece
 		switch piece {
 		case base.WKING:
-			b.Kings[base.WHITE] = sq
+			b.Kings[base.WHITE_INDEX] = sq
 		case base.BKING:
-			b.Kings[base.BLACK] = sq
+			b.Kings[base.BLACK_INDEX] = sq
 		case base.WQUEEN:
-			b.Queens[base.WHITE].Add(sq)
+			b.Queens[base.WHITE_INDEX].Add(sq)
 		case base.BQUEEN:
-			b.Queens[base.BLACK].Add(sq)
+			b.Queens[base.BLACK_INDEX].Add(sq)
 		case base.WROOK:
-			b.Rooks[base.WHITE].Add(sq)
+			b.Rooks[base.WHITE_INDEX].Add(sq)
 		case base.BROOK:
-			b.Rooks[base.BLACK].Add(sq)
+			b.Rooks[base.BLACK_INDEX].Add(sq)
 		case base.WBISHOP:
-			b.Bishops[base.WHITE].Add(sq)
+			b.Bishops[base.WHITE_INDEX].Add(sq)
 		case base.BBISHOP:
-			b.Bishops[base.BLACK].Add(sq)
+			b.Bishops[base.BLACK_INDEX].Add(sq)
 		case base.WKNIGHT:
-			b.Knights[base.WHITE].Add(sq)
+			b.Knights[base.WHITE_INDEX].Add(sq)
 		case base.BKNIGHT:
-			b.Knights[base.BLACK].Add(sq)
+			b.Knights[base.BLACK_INDEX].Add(sq)
 		case base.WPAWN:
-			b.Pawns[base.WHITE].Add(sq)
+			b.Pawns[base.WHITE_INDEX].Add(sq)
 		case base.BPAWN:
-			b.Pawns[base.BLACK].Add(sq)
+			b.Pawns[base.BLACK_INDEX].Add(sq)
 		}
 	}
 
@@ -134,11 +134,36 @@ func (b *Board) SetFEN(fenstr string) error {
 }
 
 func (b *Board) GeneratePawnMoves(color base.Color) {
-	for i := uint8(0); i < b.Pawns[color].Size; i++ {
-		// 0. Retrieve from square from piece list.
-		from := b.Pawns[color].Pieces[i]
-		// 1. Try to advance the pawn by one.
+	colorIDX := color.ToIndex()
+	from, to := base.Square(base.OTB), base.Square(base.OTB)
 
+	for i := uint8(0); i < b.Pawns[colorIDX].Size; i++ {
+		// 0. Retrieve 'from' square from piece list.
+		from = b.Pawns[colorIDX].Pieces[i]
+
+		// a. Captures
+		//		for capdir := range base.PAWN_CAPTURE_DIRS[color] {
+		//			to = from + capdir
+		//			if to.IsLegal() {
+		//				tpiece := base.Square[to]
+
+		//			}
+
+		//		}
+		// b. Promotion
+		// TODO
+		// c. Push by one.
+		to = base.Square(int8(from) + base.PAWN_PUSH_DIRS[colorIDX])
+		if b.Squares[to] == base.EMPTY {
+			// TODO -> ADD MOVE
+		}
+		// d. Double push by advancing one more time, if the pawn was at base rank.
+		if from.IsPawnBaseRank(colorIDX) {
+			to = base.Square(int8(to) + base.PAWN_PUSH_DIRS[colorIDX])
+			if b.Squares[to] == base.EMPTY {
+				// TODO -> ADD MOVE
+			}
+		}
 	}
 }
 

@@ -9,9 +9,7 @@ import (
 
 func main() {
 	b := engine.NewBoard()
-	fmt.Println(&b)
 
-	b.SetStartingPosition()
 	fmt.Println(&b)
 
 	b.GeneratePawnMoves(base.WHITE)
