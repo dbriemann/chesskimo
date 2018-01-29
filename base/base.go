@@ -1,41 +1,39 @@
 package base
 
-type Color uint8
 type Piece uint8
+
+// Color is an alias for type Piece to clarify certain declarations
+// but in the end both just represent the same things.
+type Color = Piece
 type Square uint8
 
 const (
-	// various
-	NONE = 0
-
+	// Various
+	NONE Square = 0
 	// OTB is off the board and used as a non-index in piece lists.
 	OTB Square = 0x7F
 )
 
 const (
-	// colors:
+	// Colors:
 	// BLACK and WHITE are used for pieces, DARK and LIGHT are used for squares.
-	BLACK                Color = 64  // 01000000 -> second highest bit in uint8
-	WHITE                Color = 128 // 10000000 -> highest bit in uint8
-	COLOR_MASK           Color = 192 // 11000000 -> bith highest bits in uint8
-	BLACK_INDEX                = 0
-	WHITE_INDEX                = 1
-	WHITE_OR_BLACK_SHIFT       = 7
+	BLACK           Color = 0   // 00000000
+	WHITE           Color = 1   // 00000001
+	COLOR_ONLY_MASK Color = 1   // 00000001
+	COLOR_TEST_MASK Color = 129 // 10000001
 
 	DARK  Color = iota // 0
 	LIGHT              // 1
-)
 
-const (
-	// piece types
-	EMPTY      Piece = 0  // 0
-	PAWN       Piece = 1  // 00000001
-	KNIGHT     Piece = 2  // 00000010
-	BISHOP     Piece = 4  // 00000100
-	ROOK       Piece = 8  // 00001000
-	QUEEN      Piece = 16 // 00010000
-	KING       Piece = 32 // 00100000
-	PIECE_MASK Piece = 63 // 00111111
+	// Pieces:
+	EMPTY      Piece = 128 // 10000000
+	PAWN       Piece = 2   // 00000010
+	KNIGHT     Piece = 4   // 00000100
+	BISHOP     Piece = 8   // 00000000
+	ROOK       Piece = 16  // 00010000
+	QUEEN      Piece = 32  // 00100000
+	KING       Piece = 64  // 01000000
+	PIECE_MASK Piece = 126 // 01111110
 )
 
 const (
@@ -72,21 +70,17 @@ var (
 	}
 )
 
-func (c Color) ToIndex() Color {
-	return c >> WHITE_OR_BLACK_SHIFT
-}
-
 func (c Color) FlipColor() Color {
-	//TODO
-	return 0
+	// c MUST BE 0 or 1
+	return c ^ 1
 }
 
 func (p Piece) Color() Color {
-	return Color(p) & COLOR_MASK
+	return p & COLOR_ONLY_MASK
 }
 
 func (p Piece) HasColor(color Color) bool {
-	return (color & Color(p)) != 0
+	return (COLOR_TEST_MASK & p) == color
 }
 
 func (sq Square) IsLegal() bool {
@@ -106,10 +100,10 @@ func (sq Square) File() Square {
 	return sq & 7
 }
 
-func (sq Square) IsPawnBaseRank(colorIDX Color) bool {
-	return PAWN_BASE_RANK[colorIDX] == sq.Rank()
+func (sq Square) IsPawnBaseRank(color Color) bool {
+	return PAWN_BASE_RANK[color] == sq.Rank()
 }
 
-func (sq Square) IsPawnPromoting(colorIDX Color) bool {
-	return PAWN_PROMOTE_RANK[colorIDX] == sq.Rank()
+func (sq Square) IsPawnPromoting(color Color) bool {
+	return PAWN_PROMOTE_RANK[color] == sq.Rank()
 }
