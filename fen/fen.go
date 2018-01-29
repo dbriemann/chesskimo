@@ -2,6 +2,7 @@ package fen
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -57,7 +58,7 @@ var (
 // }
 
 func ParseFEN(fen string) (base.MinBoard, error) {
-	mb := base.MinBoard{}
+	mb := base.NewMinBoard()
 
 	// Extract fields.
 	fields, err := splitFENFields(fen)
@@ -82,6 +83,7 @@ func ParseFEN(fen string) (base.MinBoard, error) {
 
 	// Extract en passent target square.
 	epSq, err := parseFENEnPassent(fields[3])
+	fmt.Println("epSq", epSq)
 	if err != nil {
 		return mb, err
 	}
@@ -207,7 +209,7 @@ func parseFENCastlingRights(castle string) ([2]bool, [2]bool) {
 // ParseEnPassent parses the current possible en passent capture square, if there is one.
 func parseFENEnPassent(ep string) (base.Square, error) {
 	if ep == "-" {
-		return base.NONE, nil
+		return base.OTB, nil
 	}
 	sq, err := parseFENSquare(ep)
 	return sq, err
@@ -228,14 +230,16 @@ func parseFENMoveNumber(num string) (uint16, error) {
 
 func parseFENSquare(sq string) (base.Square, error) {
 	if len(sq) != 2 {
-		return base.NONE, ErrFENSquareInvalid
+		return base.OTB, ErrFENSquareInvalid
 	}
 	r, f := sq[0], sq[1]
-	rank, file := r-97, 8-(f-48)
+	rank, file := base.Square(r)-97, base.Square(f)-49
+	fmt.Println(rank, file)
 
 	idx := base.Square(rank + file*8)
+	fmt.Println(idx)
 	if idx < 0 || idx > 63 {
-		return base.NONE, ErrFENSquareInvalid
+		return base.OTB, ErrFENSquareInvalid
 	}
 
 	return idx, nil

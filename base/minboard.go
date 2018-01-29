@@ -12,3 +12,11 @@ type MinBoard struct {
 	HalfMoves   uint16
 	MoveNum     uint16
 }
+
+func NewMinBoard() MinBoard {
+	mb := MinBoard{}
+	for i := 0; i < 64; i++ {
+		mb.Squares[i] = EMPTY
+	}
+	return mb
+}

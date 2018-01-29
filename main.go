@@ -9,10 +9,22 @@ import (
 
 func main() {
 	b := engine.NewBoard()
+	mlist := base.MoveList{}
 
 	fmt.Println(&b)
 
-	b.GeneratePawnMoves(base.WHITE)
+	b.GeneratePawnMoves(&mlist, base.WHITE)
+
+	fmt.Println("Moves:")
+	fmt.Println(&mlist)
+
+	b.SetFEN("rnbqkb1r/pp2pppp/5n2/2ppP3/3P4/8/PPP2PPP/RNBQKBNR w KQkq d6 0 4")
+	fmt.Println(&b)
+	mlist.Reset()
+	b.GeneratePawnMoves(&mlist, base.WHITE)
+
+	fmt.Println("Moves:")
+	fmt.Println(&mlist)
 
 	//	b.SetFEN("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")
 	//	fmt.Println()

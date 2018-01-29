@@ -1,24 +1,26 @@
 package base
 
+// TODO make this variable in size
+
 const (
-	max_moves = 512
+	max_history_moves = 1024
 )
 
 type MoveHistory struct {
 	size  uint16
-	moves [max_moves]Move
+	moves [max_history_moves]Move
 }
 
-func (ml *MoveHistory) Reset() {
-	ml.size = 0
+func (mh *MoveHistory) Reset() {
+	mh.size = 0
 }
 
-func (ml *MoveHistory) Put(m Move) {
+func (mh *MoveHistory) Put(m Move) {
 	// TODO -- should we handle excess of 512 moves?
-	ml.moves[ml.size] = m
-	ml.size++
+	mh.moves[mh.size] = m
+	mh.size++
 }
 
-func (ml *MoveHistory) Get(n uint16) Move {
-	return ml.moves[n]
+func (mh *MoveHistory) Get(n uint16) Move {
+	return mh.moves[n]
 }

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/dbriemann/chesskimo/base"
@@ -95,7 +96,16 @@ func (b *Board) SetFEN(fenstr string) error {
 	// No error encountered -> set all members of the board instance.
 	b.MoveNumber = mb.MoveNum
 	b.DrawCounter = mb.HalfMoves
-	b.EpSquare = Lookup0x88[mb.EpSquare]
+
+	fmt.Println("WHAT", mb.EpSquare)
+	if mb.EpSquare.IsLegal() {
+		b.EpSquare = Lookup0x88[mb.EpSquare]
+		fmt.Println("WHAT A", mb.EpSquare)
+	} else {
+		b.EpSquare = base.OTB
+		fmt.Println("WHAT B", mb.EpSquare)
+	}
+
 	b.CastleShort = mb.CastleShort
 	b.CastleLong = mb.CastleLong
 	b.Player = mb.Color
@@ -133,46 +143,100 @@ func (b *Board) SetFEN(fenstr string) error {
 	return nil
 }
 
-func (b *Board) GeneratePawnMoves(color base.Color) {
-	from, to := base.Square(base.OTB), base.Square(base.OTB)
+func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
+	from, to := base.OTB, base.OTB
+	tpiece := base.NO_PIECE
+	oppColor := color.FlipColor()
+	move := base.Move{}
+
+	// Possible en passent captures are detected backwards
+	// so we do not need to add another conditional to the
+	// capture loop below.
+	fmt.Println("FINAL", b.EpSquare)
+	if b.EpSquare != base.OTB {
+		from = b.EpSquare
+		// We use the 'wrong' color to find e.p. captures
+		// by searching in the opposite direction.
+		// A potential overflow of int8(from) + capdir can generally be ignored
+		// because casting it back to uint8 will correct the result.
+		to = base.Square(int8(from) + base.PAWN_CAPTURE_DIRS[color][0])
+		tpiece = b.Squares[to]
+		if to.IsLegal() && tpiece.HasColor(oppColor) {
+			move = base.NewMove(to, from, base.PAWN, base.PAWN, base.NO_PIECE, base.EP_TYPE_CAPTURE, base.NONE)
+			mlist.Put(move)
+		}
+
+		to = base.Square(int8(from) + base.PAWN_CAPTURE_DIRS[color][1])
+		tpiece = b.Squares[to]
+		if to.IsLegal() && tpiece.HasColor(oppColor) {
+			move = base.NewMove(to, from, base.PAWN, base.PAWN, base.NO_PIECE, base.EP_TYPE_CAPTURE, base.NONE)
+			mlist.Put(move)
+		}
+	}
 
 	for i := uint8(0); i < b.Pawns[color].Size; i++ {
 		// 0. Retrieve 'from' square from piece list.
 		from = b.Pawns[color].Pieces[i]
 
 		// a. Captures
-		//		for capdir := range base.PAWN_CAPTURE_DIRS[color] {
-		//			to = from + capdir
-		//			if to.IsLegal() {
-		//				tpiece := base.Square[to]
-
-		//			}
-
-		//		}
-		// b. Promotion
-		// TODO
-		// c. Push by one.
-		to = base.Square(int8(from) + base.PAWN_PUSH_DIRS[color])
-		if b.Squares[to] == base.EMPTY {
-			// TODO -> ADD MOVE
+		for _, capdir := range base.PAWN_CAPTURE_DIRS[color] {
+			to = base.Square(int8(from) + capdir)
+			tpiece = b.Squares[to]
+			// If the target square is on board and has the opponent's color
+			// the capture is possible.
+			if to.IsLegal() && tpiece.HasColor(oppColor) {
+				tpiece := b.Squares[to]
+				// We also have to check if the capture is also a promotion.
+				if to.IsPawnPromoting(color) {
+					for prom := base.QUEEN; prom >= base.KNIGHT; prom >>= 1 {
+						move = base.NewMove(from, to, base.PAWN, tpiece, prom, base.EP_TYPE_NONE, base.NONE)
+						mlist.Put(move)
+					}
+				} else {
+					move = base.NewMove(from, to, base.PAWN, tpiece, base.NO_PIECE, base.EP_TYPE_NONE, base.NONE)
+					mlist.Put(move)
+				}
+			}
 		}
-		// d. Double push by advancing one more time, if the pawn was at base rank.
+
+		// b. Push by one.
+		// Target square does never need legality check here.
+		to = base.Square(int8(from) + base.PAWN_PUSH_DIRS[color])
+		if b.Squares[to].IsEmpty() {
+			if to.IsPawnPromoting(color) {
+				for prom := base.QUEEN; prom >= base.KNIGHT; prom >>= 1 {
+					move = base.NewMove(from, to, base.PAWN, base.NO_PIECE, prom, base.EP_TYPE_NONE, base.NONE)
+					mlist.Put(move)
+				}
+			} else {
+				move = base.NewMove(from, to, base.PAWN, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.NONE)
+				mlist.Put(move)
+			}
+		}
+		// c. Double push by advancing one more time, if the pawn was at base rank.
 		if from.IsPawnBaseRank(color) {
 			to = base.Square(int8(to) + base.PAWN_PUSH_DIRS[color])
-			if b.Squares[to] == base.EMPTY {
-				// TODO -> ADD MOVE
+			if b.Squares[to].IsEmpty() {
+				move = base.NewMove(from, to, base.PAWN, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_CREATE, base.NONE)
+				mlist.Put(move)
 			}
 		}
 	}
 }
 
 func (b *Board) String() string {
+	fmt.Println("PRINT", b.EpSquare)
 	str := "  +-----------------+\n"
 	for r := 7; r >= 0; r-- {
 		str += strconv.Itoa(r+1) + " | "
 		for f := 0; f < 8; f++ {
 			idx := 16*r + f
-			str += base.PrintMap[b.Squares[idx]] + " "
+			if base.Piece(idx) == b.EpSquare {
+				str += ": "
+			} else {
+				str += base.PrintMap[b.Squares[idx]] + " "
+			}
+
 			if f == 7 {
 				str += "|\n"
 			}
