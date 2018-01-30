@@ -12,7 +12,7 @@ type MoveList struct {
 	Moves [256]Move
 }
 
-func (ml *MoveList) Reset() {
+func (ml *MoveList) Clean() {
 	ml.Size = 0
 }
 
@@ -26,9 +26,13 @@ func (ml *MoveList) Get(n uint16) Move {
 }
 
 func (ml *MoveList) String() string {
+	last := ml.Size - 1
 	str := ""
 	for i := uint16(0); i < ml.Size; i++ {
-		str += ml.Moves[i].String() + " "
+		str += ml.Moves[i].String()
+		if i < last {
+			str += ", "
+		}
 	}
 	return str
 }

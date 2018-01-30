@@ -2,7 +2,6 @@ package fen
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -83,7 +82,6 @@ func ParseFEN(fen string) (base.MinBoard, error) {
 
 	// Extract en passent target square.
 	epSq, err := parseFENEnPassent(fields[3])
-	fmt.Println("epSq", epSq)
 	if err != nil {
 		return mb, err
 	}
@@ -234,10 +232,8 @@ func parseFENSquare(sq string) (base.Square, error) {
 	}
 	r, f := sq[0], sq[1]
 	rank, file := base.Square(r)-97, base.Square(f)-49
-	fmt.Println(rank, file)
 
 	idx := base.Square(rank + file*8)
-	fmt.Println(idx)
 	if idx < 0 || idx > 63 {
 		return base.OTB, ErrFENSquareInvalid
 	}

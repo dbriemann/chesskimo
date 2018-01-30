@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/dbriemann/chesskimo/base"
@@ -97,13 +96,10 @@ func (b *Board) SetFEN(fenstr string) error {
 	b.MoveNumber = mb.MoveNum
 	b.DrawCounter = mb.HalfMoves
 
-	fmt.Println("WHAT", mb.EpSquare)
-	if mb.EpSquare.IsLegal() {
+	if mb.EpSquare != base.OTB {
 		b.EpSquare = Lookup0x88[mb.EpSquare]
-		fmt.Println("WHAT A", mb.EpSquare)
 	} else {
 		b.EpSquare = base.OTB
-		fmt.Println("WHAT B", mb.EpSquare)
 	}
 
 	b.CastleShort = mb.CastleShort
@@ -152,23 +148,22 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 	// Possible en passent captures are detected backwards
 	// so we do not need to add another conditional to the
 	// capture loop below.
-	fmt.Println("FINAL", b.EpSquare)
 	if b.EpSquare != base.OTB {
 		from = b.EpSquare
 		// We use the 'wrong' color to find e.p. captures
 		// by searching in the opposite direction.
 		// A potential overflow of int8(from) + capdir can generally be ignored
 		// because casting it back to uint8 will correct the result.
-		to = base.Square(int8(from) + base.PAWN_CAPTURE_DIRS[color][0])
+		to = base.Square(int8(from) + base.PAWN_CAPTURE_DIRS[oppColor][0])
 		tpiece = b.Squares[to]
-		if to.IsLegal() && tpiece.HasColor(oppColor) {
+		if to.IsLegal() && tpiece.HasColor(color) {
 			move = base.NewMove(to, from, base.PAWN, base.PAWN, base.NO_PIECE, base.EP_TYPE_CAPTURE, base.NONE)
 			mlist.Put(move)
 		}
 
-		to = base.Square(int8(from) + base.PAWN_CAPTURE_DIRS[color][1])
+		to = base.Square(int8(from) + base.PAWN_CAPTURE_DIRS[oppColor][1])
 		tpiece = b.Squares[to]
-		if to.IsLegal() && tpiece.HasColor(oppColor) {
+		if to.IsLegal() && tpiece.HasColor(color) {
 			move = base.NewMove(to, from, base.PAWN, base.PAWN, base.NO_PIECE, base.EP_TYPE_CAPTURE, base.NONE)
 			mlist.Put(move)
 		}
@@ -189,7 +184,7 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 				// We also have to check if the capture is also a promotion.
 				if to.IsPawnPromoting(color) {
 					for prom := base.QUEEN; prom >= base.KNIGHT; prom >>= 1 {
-						move = base.NewMove(from, to, base.PAWN, tpiece, prom, base.EP_TYPE_NONE, base.NONE)
+						move = base.NewMove(from, to, base.PAWN, tpiece, prom|color, base.EP_TYPE_NONE, base.NONE)
 						mlist.Put(move)
 					}
 				} else {
@@ -205,7 +200,7 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 		if b.Squares[to].IsEmpty() {
 			if to.IsPawnPromoting(color) {
 				for prom := base.QUEEN; prom >= base.KNIGHT; prom >>= 1 {
-					move = base.NewMove(from, to, base.PAWN, base.NO_PIECE, prom, base.EP_TYPE_NONE, base.NONE)
+					move = base.NewMove(from, to, base.PAWN, base.NO_PIECE, prom|color, base.EP_TYPE_NONE, base.NONE)
 					mlist.Put(move)
 				}
 			} else {
@@ -225,14 +220,13 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 }
 
 func (b *Board) String() string {
-	fmt.Println("PRINT", b.EpSquare)
 	str := "  +-----------------+\n"
 	for r := 7; r >= 0; r-- {
 		str += strconv.Itoa(r+1) + " | "
 		for f := 0; f < 8; f++ {
 			idx := 16*r + f
 			if base.Piece(idx) == b.EpSquare {
-				str += ": "
+				str += ", "
 			} else {
 				str += base.PrintMap[b.Squares[idx]] + " "
 			}

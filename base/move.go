@@ -48,7 +48,7 @@ func (m *Move) String() string {
 	if m.EpType == EP_TYPE_CAPTURE {
 		str += " e.p."
 	} else if m.PromotionType != NO_PIECE {
-		str += "=" + PrintMap[m.PromotionType&PIECE_MASK]
+		str += "=" + PrintMap[m.PromotionType]
 	}
 	return str
 }

@@ -13,28 +13,41 @@ func main() {
 
 	fmt.Println(&b)
 
-	b.GeneratePawnMoves(&mlist, base.WHITE)
+	b.GeneratePawnMoves(&mlist, b.Player)
 
 	fmt.Println("Moves:")
 	fmt.Println(&mlist)
 
 	b.SetFEN("rnbqkb1r/pp2pppp/5n2/2ppP3/3P4/8/PPP2PPP/RNBQKBNR w KQkq d6 0 4")
 	fmt.Println(&b)
-	mlist.Reset()
-	b.GeneratePawnMoves(&mlist, base.WHITE)
+	mlist.Clean()
+	b.GeneratePawnMoves(&mlist, b.Player)
 
 	fmt.Println("Moves:")
 	fmt.Println(&mlist)
 
-	//	b.SetFEN("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")
-	//	fmt.Println()
-	//	fmt.Println(&b)
+	b.SetFEN("r2qkbnr/pp2p1Pp/1np1b3/3pPp2/3P4/8/PPP2PP1/RNBQKBNR w KQkq f6 0 8")
+	fmt.Println(&b)
+	mlist.Clean()
+	b.GeneratePawnMoves(&mlist, b.Player)
 
-	//	b.SetFEN("rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2")
-	//	fmt.Println()
-	//	fmt.Println(&b)
+	fmt.Println("Moves:")
+	fmt.Println(&mlist)
 
-	//	b.SetFEN("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2")
-	//	fmt.Println()
-	//	fmt.Println(&b)
+	b.SetFEN("r2qkb1r/pp2p1Pp/1np1bn2/3p4/3P4/8/PPP2PP1/RNBQKBNR w KQkq - 0 9")
+	fmt.Println(&b)
+	mlist.Clean()
+	b.GeneratePawnMoves(&mlist, b.Player)
+
+	fmt.Println("Moves:")
+	fmt.Println(&mlist)
+
+	b.SetFEN("r2qkbnr/pp2p1Pp/1np1b3/4P3/1PpP1P2/8/P6p/RNBQKBN1 b Qkq b3 0 12")
+	fmt.Println(&b)
+	mlist.Clean()
+	b.GeneratePawnMoves(&mlist, b.Player)
+
+	fmt.Println("Moves:")
+	fmt.Println(&mlist)
+
 }
