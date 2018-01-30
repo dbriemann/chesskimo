@@ -24,7 +24,10 @@ func main() {
 		b.SetFEN(fen)
 		fmt.Println(&b)
 		mlist.Clear()
-		b.GenerateKnightMoves(&mlist, b.Player)
+		b.GenerateQueenMoves(&mlist, b.Player)
+		//		b.GenerateRookMoves(&mlist, b.Player)
+		//		b.GenerateBishopMoves(&mlist, b.Player)
+		//		b.GenerateKnightMoves(&mlist, b.Player)
 		//		b.GeneratePawnMoves(&mlist, b.Player)
 
 		fmt.Println("Moves:")

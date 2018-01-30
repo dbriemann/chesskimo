@@ -27,12 +27,13 @@ func (ml *MoveList) Get(n uint16) Move {
 
 func (ml *MoveList) String() string {
 	last := ml.Size - 1
-	str := ""
+	str := "["
 	for i := uint16(0); i < ml.Size; i++ {
 		str += ml.Moves[i].String()
 		if i < last {
 			str += ", "
 		}
 	}
+	str += "]"
 	return str
 }

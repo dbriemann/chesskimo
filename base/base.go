@@ -23,6 +23,7 @@ const (
 	LIGHT              // 1
 
 	// Pieces:
+	// TODO: should NO_PIECE equal EMPTY??
 	NO_PIECE   Piece = 0   // For special usage only
 	EMPTY      Piece = 128 // 10000000
 	PAWN       Piece = 2   // 00000010

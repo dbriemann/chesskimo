@@ -252,6 +252,74 @@ func (b *Board) GenerateKnightMoves(mlist *base.MoveList, color base.Color) {
 	}
 }
 
+// GenerateBishopMoves generates all pseudo legal bishop moves for the given color
+// and stores them in the given MoveList.
+func (b *Board) GenerateBishopMoves(mlist *base.MoveList, color base.Color) {
+	b.GenerateSlidingMoves(mlist, color, base.BISHOP, base.DIAGONAL_DIRS, &b.Bishops[color])
+}
+
+// GenerateRookMoves generates all pseudo legal rook moves for the given color
+// and stores them in the given MoveList.
+func (b *Board) GenerateRookMoves(mlist *base.MoveList, color base.Color) {
+	b.GenerateSlidingMoves(mlist, color, base.ROOK, base.ORTHOGONAL_DIRS, &b.Rooks[color])
+}
+
+// GenerateQueenMoves generates all pseudo legal rook moves for the given color
+// and stores them in the given MoveList.
+func (b *Board) GenerateQueenMoves(mlist *base.MoveList, color base.Color) {
+	b.GenerateSlidingMoves(mlist, color, base.QUEEN, base.ORTHOGONAL_DIRS, &b.Queens[color])
+	b.GenerateSlidingMoves(mlist, color, base.QUEEN, base.DIAGONAL_DIRS, &b.Queens[color])
+}
+
+// GenerateSlidingMoves generates all pseudo legal sliding moves for the given color
+// and stores them in the given MoveList. This can be diagonal or orthogonal moves.
+// This function is used to create all bishop, rook and queen moves.
+func (b *Board) GenerateSlidingMoves(mlist *base.MoveList, color base.Color, ptype base.Piece, dirs [4]int8, plist *base.PieceList) {
+	from, to := base.OTB, base.OTB
+	tpiece := base.NO_PIECE
+	move := base.Move{}
+	piece := ptype | color
+
+	// Iterate all specific pieces.
+	for i := uint8(0); i < plist.Size; i++ {
+		from = plist.Pieces[i]
+
+		// For every direction a bishop can go..
+		for _, dir := range dirs {
+			// -> repeat until a stop condition occurs.
+
+			for steps := int8(1); ; steps++ {
+				to = base.Square(int8(from) + dir*steps)
+				if !to.IsLegal() {
+					// Target is an illegal square -> next direction.
+					break
+				} else {
+					tpiece = b.Squares[to]
+					if tpiece.HasColor(color) {
+						// Target is blocked by own piece -> next direction.
+						break
+					} else {
+						if tpiece.IsEmpty() {
+							// Add a normal move.
+							move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.NONE)
+							mlist.Put(move)
+							// And continue in current direction.
+						} else {
+							// Add a capture move.
+							move = base.NewMove(from, to, piece, tpiece, base.NO_PIECE, base.EP_TYPE_NONE, base.NONE)
+							mlist.Put(move)
+							// And go to next direction.
+							break
+						}
+					}
+				}
+
+			}
+		}
+
+	}
+}
+
 func (b *Board) String() string {
 	str := "  +-----------------+\n"
 	for r := 7; r >= 0; r-- {
