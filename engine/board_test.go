@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -22,7 +21,7 @@ func TestGeneratePawnMoves(t *testing.T) {
 	// There are only single and double pawn pushes here.
 	board.GeneratePawnMoves(&mlist, board.Player)
 	// Transform move list to a string.
-	strmoves := fmt.Sprint(&mlist)
+	strmoves := mlist.String()
 	// Test resulting moves.
 	if strings.Compare(strmoves, result1) != 0 {
 		t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, result1, &mlist)
@@ -32,7 +31,7 @@ func TestGeneratePawnMoves(t *testing.T) {
 	mlist.Clean()
 	board.SetFEN("rnbqkb1r/pp2pppp/5n2/2ppP3/3P4/8/PPP2PPP/RNBQKBNR w KQkq d6 0 4")
 	board.GeneratePawnMoves(&mlist, board.Player)
-	strmoves = fmt.Sprint(&mlist)
+	strmoves = mlist.String()
 	if strings.Compare(strmoves, result2) != 0 {
 		t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, result2, &mlist)
 	}
@@ -41,7 +40,7 @@ func TestGeneratePawnMoves(t *testing.T) {
 	mlist.Clean()
 	board.SetFEN("r2qkbnr/pp2p1Pp/1np1b3/3pPp2/3P4/8/PPP2PP1/RNBQKBNR w KQkq f6 0 8")
 	board.GeneratePawnMoves(&mlist, board.Player)
-	strmoves = fmt.Sprint(&mlist)
+	strmoves = mlist.String()
 	if strings.Compare(strmoves, result3) != 0 {
 		t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, result3, &mlist)
 	}
@@ -50,7 +49,7 @@ func TestGeneratePawnMoves(t *testing.T) {
 	mlist.Clean()
 	board.SetFEN("r2qkb1r/pp2p1Pp/1np1bn2/3p4/3P4/8/PPP2PP1/RNBQKBNR w KQkq - 0 9")
 	board.GeneratePawnMoves(&mlist, board.Player)
-	strmoves = fmt.Sprint(&mlist)
+	strmoves = mlist.String()
 	if strings.Compare(strmoves, result4) != 0 {
 		t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, result4, &mlist)
 	}
@@ -60,7 +59,7 @@ func TestGeneratePawnMoves(t *testing.T) {
 	mlist.Clean()
 	board.SetFEN("r2qkbnr/pp2p1Pp/1np1b3/4P3/1PpP1P2/8/P6p/RNBQKBN1 b Qkq b3 0 12")
 	board.GeneratePawnMoves(&mlist, board.Player)
-	strmoves = fmt.Sprint(&mlist)
+	strmoves = mlist.String()
 	if strings.Compare(strmoves, result5) != 0 {
 		t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, result5, &mlist)
 	}

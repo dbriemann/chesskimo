@@ -144,6 +144,7 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 	tpiece := base.NO_PIECE
 	oppColor := color.FlipColor()
 	move := base.Move{}
+	piece := base.PAWN | color
 
 	// Possible en passent captures are detected backwards
 	// so we do not need to add another conditional to the
@@ -157,14 +158,14 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 		to = base.Square(int8(from) + base.PAWN_CAPTURE_DIRS[oppColor][0])
 		tpiece = b.Squares[to]
 		if to.IsLegal() && tpiece.HasColor(color) {
-			move = base.NewMove(to, from, base.PAWN, base.PAWN, base.NO_PIECE, base.EP_TYPE_CAPTURE, base.NONE)
+			move = base.NewMove(to, from, piece, base.PAWN|oppColor, base.NO_PIECE, base.EP_TYPE_CAPTURE, base.NONE)
 			mlist.Put(move)
 		}
 
 		to = base.Square(int8(from) + base.PAWN_CAPTURE_DIRS[oppColor][1])
 		tpiece = b.Squares[to]
 		if to.IsLegal() && tpiece.HasColor(color) {
-			move = base.NewMove(to, from, base.PAWN, base.PAWN, base.NO_PIECE, base.EP_TYPE_CAPTURE, base.NONE)
+			move = base.NewMove(to, from, piece, base.PAWN|oppColor, base.NO_PIECE, base.EP_TYPE_CAPTURE, base.NONE)
 			mlist.Put(move)
 		}
 	}
@@ -180,15 +181,14 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 			// If the target square is on board and has the opponent's color
 			// the capture is possible.
 			if to.IsLegal() && tpiece.HasColor(oppColor) {
-				tpiece := b.Squares[to]
 				// We also have to check if the capture is also a promotion.
 				if to.IsPawnPromoting(color) {
 					for prom := base.QUEEN; prom >= base.KNIGHT; prom >>= 1 {
-						move = base.NewMove(from, to, base.PAWN, tpiece, prom|color, base.EP_TYPE_NONE, base.NONE)
+						move = base.NewMove(from, to, piece, tpiece, prom|color, base.EP_TYPE_NONE, base.NONE)
 						mlist.Put(move)
 					}
 				} else {
-					move = base.NewMove(from, to, base.PAWN, tpiece, base.NO_PIECE, base.EP_TYPE_NONE, base.NONE)
+					move = base.NewMove(from, to, piece, tpiece, base.NO_PIECE, base.EP_TYPE_NONE, base.NONE)
 					mlist.Put(move)
 				}
 			}
@@ -200,11 +200,11 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 		if b.Squares[to].IsEmpty() {
 			if to.IsPawnPromoting(color) {
 				for prom := base.QUEEN; prom >= base.KNIGHT; prom >>= 1 {
-					move = base.NewMove(from, to, base.PAWN, base.NO_PIECE, prom|color, base.EP_TYPE_NONE, base.NONE)
+					move = base.NewMove(from, to, piece, base.NO_PIECE, prom|color, base.EP_TYPE_NONE, base.NONE)
 					mlist.Put(move)
 				}
 			} else {
-				move = base.NewMove(from, to, base.PAWN, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.NONE)
+				move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.NONE)
 				mlist.Put(move)
 			}
 		}
@@ -212,9 +212,38 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 		if from.IsPawnBaseRank(color) {
 			to = base.Square(int8(to) + base.PAWN_PUSH_DIRS[color])
 			if b.Squares[to].IsEmpty() {
-				move = base.NewMove(from, to, base.PAWN, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_CREATE, base.NONE)
+				move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_CREATE, base.NONE)
 				mlist.Put(move)
 			}
+		}
+	}
+}
+
+func (b *Board) GenerateKnightMoves(mlist *base.MoveList, color base.Color) {
+	from, to := base.OTB, base.OTB
+	tpiece := base.NO_PIECE
+	oppColor := color.FlipColor()
+	move := base.Move{}
+	piece := base.KNIGHT | color
+
+	// Iterate all knights of 'color'.
+	for i := uint8(0); i < b.Knights[color].Size; i++ {
+		from = b.Knights[color].Pieces[i]
+		// Try all possible directions for a knight.
+		for _, dir := range base.KNIGHT_DIRS {
+			to = base.Square(int8(from) + dir)
+			if to.IsLegal() {
+				tpiece = b.Squares[to]
+				if tpiece.IsEmpty() {
+					// Add a normal move.
+					move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.NONE)
+					mlist.Put(move)
+				} else if tpiece.HasColor(oppColor) {
+					// Add a capture move.
+					move = base.NewMove(from, to, piece, tpiece, base.NO_PIECE, base.EP_TYPE_NONE, base.NONE)
+					mlist.Put(move)
+				} // Else the square is occupied by own piece.
+			} // Else target is outside of board.
 		}
 	}
 }
