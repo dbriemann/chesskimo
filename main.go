@@ -9,6 +9,7 @@ import (
 
 func main() {
 	fens := []string{
+		"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
 		"rnbqkb1r/pp2pppp/5n2/2ppP3/3P4/8/PPP2PPP/RNBQKBNR w KQkq d6 0 4",
 		"r2qkbnr/pp2p1Pp/1np1b3/3pPp2/3P4/8/PPP2PP1/RNBQKBNR w KQkq f6 0 8",
 		"r2qkb1r/pp2p1Pp/1np1bn2/3p4/3P4/8/PPP2PP1/RNBQKBNR w KQkq - 0 9",
@@ -22,9 +23,9 @@ func main() {
 	for _, fen := range fens {
 		b.SetFEN(fen)
 		fmt.Println(&b)
-		mlist.Clean()
-		//		b.GeneratePawnMoves(&mlist, b.Player)
+		mlist.Clear()
 		b.GenerateKnightMoves(&mlist, b.Player)
+		//		b.GeneratePawnMoves(&mlist, b.Player)
 
 		fmt.Println("Moves:")
 		fmt.Println(&mlist)

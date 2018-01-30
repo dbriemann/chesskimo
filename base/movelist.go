@@ -12,7 +12,7 @@ type MoveList struct {
 	Moves [256]Move
 }
 
-func (ml *MoveList) Clean() {
+func (ml *MoveList) Clear() {
 	ml.Size = 0
 }
 

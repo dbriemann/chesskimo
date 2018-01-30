@@ -139,6 +139,8 @@ func (b *Board) SetFEN(fenstr string) error {
 	return nil
 }
 
+// GeneratePawnMoves generates all pseudo legal pawn moves for the given color
+// and stores them in the given MoveList.
 func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 	from, to := base.OTB, base.OTB
 	tpiece := base.NO_PIECE
@@ -219,6 +221,8 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 	}
 }
 
+// GenerateKnightMoves generates all pseudo legal knight moves for the given color
+// and stores them in the given MoveList.
 func (b *Board) GenerateKnightMoves(mlist *base.MoveList, color base.Color) {
 	from, to := base.OTB, base.OTB
 	tpiece := base.NO_PIECE

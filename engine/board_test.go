@@ -1,66 +1,61 @@
 package engine
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/dbriemann/chesskimo/base"
 )
 
-func TestGeneratePawnMoves(t *testing.T) {
-	result1 := "a2-a3, a2-a4, b2-b3, b2-b4, c2-c3, c2-c4, d2-d3, d2-d4, e2-e3, e2-e4, f2-f3, f2-f4, g2-g3, g2-g4, h2-h3, h2-h4"
-	result2 := "e5xd6 e.p., a2-a3, a2-a4, b2-b3, b2-b4, c2-c3, c2-c4, f2-f3, f2-f4, g2-g3, g2-g4, h2-h3, h2-h4, d4xc5, e5xnf6, e5-e6"
-	result3 := "e5xf6 e.p., a2-a3, a2-a4, b2-b3, b2-b4, c2-c3, c2-c4, f2-f3, f2-f4, g2-g3, g2-g4, g7xbf8=Q, g7xbf8=R, g7xbf8=B, g7xbf8=N, g7xrh8=Q, g7xrh8=R, g7xrh8=B, g7xrh8=N"
-	result4 := "a2-a3, a2-a4, b2-b3, b2-b4, c2-c3, c2-c4, f2-f3, f2-f4, g2-g3, g2-g4, g7xbf8=Q, g7xbf8=R, g7xbf8=B, g7xbf8=N, g7xrh8=Q, g7xrh8=R, g7xrh8=B, g7xrh8=N, g7-g8=Q, g7-g8=R, g7-g8=B, g7-g8=N"
-	result5 := "c4xb3 e.p., h2xNg1=q, h2xNg1=r, h2xNg1=b, h2xNg1=n, h2-h1=q, h2-h1=r, h2-h1=b, h2-h1=n, c4-c3, c6-c5, a7-a6, a7-a5, b7-b5, h7-h6, h7-h5"
+func TestGenerateKnightMoves(t *testing.T) {
+	fens := []string{
+		"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+		"r1bqk2r/ppp2ppp/2n2n2/1B1pp3/1b1PP1P1/2N2N2/PPP2P1P/R1BQK2R b KQkq g3 0 6",
+	}
+	results := []string{
+		"Nb1-a3, Nb1-c3, Ng1-f3, Ng1-h3",
+		"nc6-b8, nc6xPd4, nc6-a5, nc6-e7, nf6-g8, nf6xPe4, nf6xPg4, nf6-d7, nf6-h5",
+	}
 
 	board := NewBoard()
 	mlist := base.MoveList{}
 
-	// Generate pawn moves for root position.
-	// There are only single and double pawn pushes here.
-	board.GeneratePawnMoves(&mlist, board.Player)
-	// Transform move list to a string.
-	strmoves := mlist.String()
-	// Test resulting moves.
-	if strings.Compare(strmoves, result1) != 0 {
-		t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, result1, &mlist)
+	for i, fen := range fens {
+		board.SetFEN(fen)
+		mlist.Clear()
+		board.GenerateKnightMoves(&mlist, board.Player)
+		strmoves := mlist.String()
+		if strmoves != results[i] {
+			t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, results[i], &mlist)
+		}
+	}
+}
+
+func TestGeneratePawnMoves(t *testing.T) {
+	fens := []string{
+		"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+		"rnbqkb1r/pp2pppp/5n2/2ppP3/3P4/8/PPP2PPP/RNBQKBNR w KQkq d6 0 4",
+		"r2qkbnr/pp2p1Pp/1np1b3/3pPp2/3P4/8/PPP2PP1/RNBQKBNR w KQkq f6 0 8",
+		"r2qkb1r/pp2p1Pp/1np1bn2/3p4/3P4/8/PPP2PP1/RNBQKBNR w KQkq - 0 9",
+		"r2qkbnr/pp2p1Pp/1np1b3/4P3/1PpP1P2/8/P6p/RNBQKBN1 b Qkq b3 0 12",
+	}
+	results := []string{
+		"Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pd2-d3, Pd2-d4, Pe2-e3, Pe2-e4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Ph2-h3, Ph2-h4",
+		"Pe5xpd6 e.p., Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Ph2-h3, Ph2-h4, Pd4xpc5, Pe5xnf6, Pe5-e6",
+		"Pe5xpf6 e.p., Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Pg7xbf8=Q, Pg7xbf8=R, Pg7xbf8=B, Pg7xbf8=N, Pg7xrh8=Q, Pg7xrh8=R, Pg7xrh8=B, Pg7xrh8=N",
+		"Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Pg7xbf8=Q, Pg7xbf8=R, Pg7xbf8=B, Pg7xbf8=N, Pg7xrh8=Q, Pg7xrh8=R, Pg7xrh8=B, Pg7xrh8=N, Pg7-g8=Q, Pg7-g8=R, Pg7-g8=B, Pg7-g8=N",
+		"pc4xPb3 e.p., ph2xNg1=q, ph2xNg1=r, ph2xNg1=b, ph2xNg1=n, ph2-h1=q, ph2-h1=r, ph2-h1=b, ph2-h1=n, pc4-c3, pc6-c5, pa7-a6, pa7-a5, pb7-b5, ph7-h6, ph7-h5",
 	}
 
-	// The following position includes en passent and other captures.
-	mlist.Clean()
-	board.SetFEN("rnbqkb1r/pp2pppp/5n2/2ppP3/3P4/8/PPP2PPP/RNBQKBNR w KQkq d6 0 4")
-	board.GeneratePawnMoves(&mlist, board.Player)
-	strmoves = mlist.String()
-	if strings.Compare(strmoves, result2) != 0 {
-		t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, result2, &mlist)
-	}
+	board := NewBoard()
+	mlist := base.MoveList{}
 
-	// The following position contains en passent and captures to promotion.
-	mlist.Clean()
-	board.SetFEN("r2qkbnr/pp2p1Pp/1np1b3/3pPp2/3P4/8/PPP2PP1/RNBQKBNR w KQkq f6 0 8")
-	board.GeneratePawnMoves(&mlist, board.Player)
-	strmoves = mlist.String()
-	if strings.Compare(strmoves, result3) != 0 {
-		t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, result3, &mlist)
-	}
-
-	// The following position contains captures to promotion and a push to promotion.
-	mlist.Clean()
-	board.SetFEN("r2qkb1r/pp2p1Pp/1np1bn2/3p4/3P4/8/PPP2PP1/RNBQKBNR w KQkq - 0 9")
-	board.GeneratePawnMoves(&mlist, board.Player)
-	strmoves = mlist.String()
-	if strings.Compare(strmoves, result4) != 0 {
-		t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, result4, &mlist)
-	}
-
-	// The following position contains captures to promotion and a push to promotion and en passent.
-	// This time for the black side.
-	mlist.Clean()
-	board.SetFEN("r2qkbnr/pp2p1Pp/1np1b3/4P3/1PpP1P2/8/P6p/RNBQKBN1 b Qkq b3 0 12")
-	board.GeneratePawnMoves(&mlist, board.Player)
-	strmoves = mlist.String()
-	if strings.Compare(strmoves, result5) != 0 {
-		t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, result5, &mlist)
+	for i, fen := range fens {
+		board.SetFEN(fen)
+		mlist.Clear()
+		board.GeneratePawnMoves(&mlist, board.Player)
+		strmoves := mlist.String()
+		if strmoves != results[i] {
+			t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, results[i], &mlist)
+		}
 	}
 }

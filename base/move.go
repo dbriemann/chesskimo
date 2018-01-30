@@ -32,15 +32,15 @@ func (m *Move) String() string {
 	// TODO - this should be somewhat performant in the end
 	// byte buffers?!
 	str := ""
-	if !m.PieceType.IsType(PAWN) {
-		str += PrintMap[m.PieceType]
-	}
+	//	if !m.PieceType.IsType(PAWN) {
+	str += PrintMap[m.PieceType]
+	//	}
 	str += PrintBoardIndex[m.From]
 	if m.CaptureType != NO_PIECE {
 		str += "x"
-		if !m.CaptureType.IsType(PAWN) {
-			str += PrintMap[m.CaptureType]
-		}
+		//		if !m.CaptureType.IsType(PAWN) {
+		str += PrintMap[m.CaptureType]
+		//		}
 	} else {
 		str += "-"
 	}
