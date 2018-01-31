@@ -167,17 +167,20 @@ func (b *Board) FindAttacksAndPins(color base.Color) {
 	//	}
 
 	// Find all squares attacked by opposing pawns.
-	for _, from = range b.Pawns[oppColor].Pieces {
-		for _, dir := range base.PAWN_CAPTURE_DIRS[oppColor] {
-			to = base.Square(int8(from) + dir)
-			if to.IsLegal() {
-				b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
-			}
-		}
-	}
+	//	for i := uint8(0); i < b.Pawns[oppColor].Size; i++ {
+	//		from = b.Pawns[oppColor].Pieces[i]
+	//		fmt.Println("from ", base.PrintBoardIndex[from])
+	//		for _, dir := range base.PAWN_CAPTURE_DIRS[oppColor] {
+	//			to = base.Square(int8(from) + dir)
+	//			if to.IsLegal() {
+	//				b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
+	//			}
+	//		}
+	//	}
 
-	//	// Find all squares attacked by opposing knights.
-	//	for _, from = range b.Knights[oppColor].Pieces {
+	// Find all squares attacked by opposing knights.
+	//	for i := uint8(0); i < b.Knights[oppColor].Size; i++ {
+	//		from = b.Knights[oppColor].Pieces[i]
 	//		for _, dir := range base.KNIGHT_DIRS {
 	//			to = base.Square(int8(from) + dir)
 	//			if to.IsLegal() {
@@ -186,81 +189,85 @@ func (b *Board) FindAttacksAndPins(color base.Color) {
 	//		}
 	//	}
 
-	//	bishops := &b.Bishops[oppColor].Pieces
-	//	rooks := &b.Rooks[oppColor].Pieces
-	//	for round := 1; round <= 2; round++ {
-	//		// Find all squares attacked by opposing bishops
-	//		// and by queens in the second iteration.
-	//		// (diagonal sliders)
-	//		for _, from = range bishops {
-	//			for _, dir := range base.DIAGONAL_DIRS {
-	//				for steps := int8(1); ; steps++ {
-	//					to = base.Square(int8(from) + dir*steps)
-	//					if to.IsLegal() {
-	//						tpiece := b.Squares[to]
-	//						if tpiece.HasColor(oppColor) {
-	//							// Blocked by brethren.
-	//							break
-	//						} else if tpiece.HasColor(color) {
-	//							// Test for check first
-	//							if tpiece.IsType(base.KING) {
-	//								b.IsCheck = true
-	//								break
-	//							}
-	//							// May be a pin -> mark for later.
-	//							b.Squares[to.ToInfoIndex()] = base.INFO_MAYBE_PINNED
-	//						} else {
-	//							// Empty field is just marked as attacked.
-	//							b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
-	//						}
-	//					} else {
-	//						break
-	//					}
-	//				}
-	//			}
-	//		}
+	bishops := &b.Bishops[oppColor]
+	rooks := &b.Rooks[oppColor]
+	for round := 1; round <= 2; round++ {
+		// Find all squares attacked by opposing bishops
+		// and by queens in the second iteration.
+		// (diagonal sliders)
+		for i := uint8(0); i < bishops.Size; i++ {
+			from = bishops.Pieces[i]
+			for _, dir := range base.DIAGONAL_DIRS {
+				for steps := int8(1); ; steps++ {
+					to = base.Square(int8(from) + dir*steps)
+					if to.IsLegal() {
+						tpiece := b.Squares[to]
+						if tpiece.HasColor(oppColor) {
+							// Blocked by brethren.
+							break
+						} else if tpiece.HasColor(color) {
+							// Test for check first
+							if tpiece.IsType(base.KING) {
+								b.IsCheck = true
+								break
+							}
+							// May be a pin -> mark for later.
+							b.Squares[to.ToInfoIndex()] = base.INFO_MAYBE_PINNED
+							break
+						} else {
+							// Empty field is just marked as attacked.
+							b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
+						}
+					} else {
+						break
+					}
+				}
+			}
+		}
 
-	//		// Find all squares attacked by opposing rooks
-	//		// and by queens in the second iteration.
-	//		// (orthogonal sliders)
-	//		for _, from = range rooks {
-	//			for _, dir := range base.ORTHOGONAL_DIRS {
-	//				for steps := int8(1); ; steps++ {
-	//					to = base.Square(int8(from) + dir*steps)
-	//					if to.IsLegal() {
-	//						tpiece := b.Squares[to]
-	//						if tpiece.HasColor(oppColor) {
-	//							// Blocked by brethren.
-	//							break
-	//						} else if tpiece.HasColor(color) {
-	//							// Test for check first
-	//							if tpiece.IsType(base.KING) {
-	//								b.IsCheck = true
-	//								break
-	//							}
-	//							// May be a pin -> mark for later.
-	//							b.Squares[to.ToInfoIndex()] = base.INFO_MAYBE_PINNED
-	//						} else {
-	//							// Empty field is just marked as attacked.
-	//							b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
-	//						}
-	//					} else {
-	//						break
-	//					}
-	//				}
-	//			}
-	//		}
+		// Find all squares attacked by opposing rooks
+		// and by queens in the second iteration.
+		// (orthogonal sliders)
+		for i := uint8(0); i < rooks.Size; i++ {
+			from = rooks.Pieces[i]
+			for _, dir := range base.ORTHOGONAL_DIRS {
+				for steps := int8(1); ; steps++ {
+					to = base.Square(int8(from) + dir*steps)
+					if to.IsLegal() {
+						tpiece := b.Squares[to]
+						if tpiece.HasColor(oppColor) {
+							// Blocked by brethren.
+							break
+						} else if tpiece.HasColor(color) {
+							// Test for check first
+							if tpiece.IsType(base.KING) {
+								b.IsCheck = true
+								break
+							}
+							// May be a pin -> mark for later.
+							b.Squares[to.ToInfoIndex()] = base.INFO_MAYBE_PINNED
+						} else {
+							// Empty field is just marked as attacked.
+							b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
+						}
+					} else {
+						break
+					}
+				}
+			}
+		}
 
-	//		// After bishops and rooks have been checked replace them
-	//		// by the queens list, and reuse the code above.
-	//		bishops = &b.Queens[oppColor].Pieces
-	//		rooks = &b.Queens[oppColor].Pieces
-	//	}
+		// After bishops and rooks have been checked replace them
+		// by the queens list, and reuse the code above.
+		bishops = &b.Queens[oppColor]
+		rooks = &b.Queens[oppColor]
+	}
 
 	fmt.Println("????")
-	for _, idx := range base.INFO_BOARD_INDEXES {
-		fmt.Print(int(b.Squares[idx]))
-	}
+	fmt.Println(b.InfoBoardString())
+	//	for _, idx := range base.INFO_BOARD_INDEXES {
+	//		fmt.Print(int(b.Squares[idx]))
+	//	}
 	fmt.Println()
 }
 
@@ -507,6 +514,24 @@ func (b *Board) GenerateSlidingMoves(mlist *base.MoveList, color base.Color, pty
 		}
 
 	}
+}
+
+func (b *Board) InfoBoardString() string {
+	str := "  +-----------------+\n"
+	for r := 7; r >= 0; r-- {
+		str += strconv.Itoa(r+1) + " | "
+		for f := 0; f < 8; f++ {
+			idx := 16*r + f + 8
+			str += strconv.Itoa(int(b.Squares[idx])) + " "
+			if f == 7 {
+				str += "|\n"
+			}
+		}
+	}
+	str += "  +-----------------+\n"
+	str += "    a b c d e f g h\n"
+
+	return str
 }
 
 func (b *Board) String() string {
