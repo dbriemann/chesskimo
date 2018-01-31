@@ -6,6 +6,102 @@ import (
 	"github.com/dbriemann/chesskimo/base"
 )
 
+func TestGenerateKingMoves(t *testing.T) {
+	fens := []string{
+		"r3k2r/pppq1ppp/2npbn2/2b1p3/2B1P3/2NPBN2/PPPQ1PPP/R3K2R w KQkq - 4 8",
+		"r1bqk2r/ppp2ppp/2n2n2/1B1pp3/1b1PP1P1/2N2N2/PPP2P1P/R1BQK2R b KQkq g3 0 6",
+	}
+	results := []string{
+		"[0-0, 0-0-0, Ke1-f1, Ke1-d1, Ke1-e2]",
+		"[0-0, ke8-f8, ke8-e7, ke8-d7]",
+	}
+
+	board := NewBoard()
+	mlist := base.MoveList{}
+
+	for i, fen := range fens {
+		board.SetFEN(fen)
+		mlist.Clear()
+		board.GenerateKingMoves(&mlist, board.Player)
+		strmoves := mlist.String()
+		if strmoves != results[i] {
+			t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, results[i], &mlist)
+		}
+	}
+}
+
+func TestGenerateQueenMoves(t *testing.T) {
+	fens := []string{
+		"7k/1QQr4/1nrp4/2Qp4/Qn2pp2/3Q1p2/1K4p1/3qQ3 w - - 0 1",
+		"r2qkbnr/pp2p1Pp/1np1b3/4P3/1PpP1P2/8/P6p/RNBQKBN1 b Qkq b3 0 12",
+	}
+	results := []string{
+		"[Qe1xqd1, Qe1-e2, Qe1-e3, Qe1xpe4, Qe1-f1, Qe1-g1, Qe1-h1, Qd3-c3, Qd3-b3, Qd3-a3, Qd3-d4, Qd3xpd5, Qd3-e3, Qd3xpf3, Qd3-d2, Qd3xqd1, Qa4-a5, Qa4-a6, Qa4-a7, Qa4-a8, Qa4xnb4, Qa4-a3, Qa4-a2, Qa4-a1, Qc5-b5, Qc5-a5, Qc5xrc6, Qc5xpd5, Qc5-c4, Qc5-c3, Qc5-c2, Qc5-c1, Qb7-a7, Qb7-b8, Qb7xnb6, Qc7-c8, Qc7xrd7, Qc7xrc6, Qe1-d2, Qe1-c3, Qe1xnb4, Qe1-f2, Qe1-g3, Qe1-h4, Qd3-c4, Qd3-b5, Qd3-a6, Qd3xpe4, Qd3-c2, Qd3-b1, Qd3-e2, Qd3-f1, Qa4-b5, Qa4xrc6, Qa4-b3, Qa4-c2, Qa4xqd1, Qc5xnb6, Qc5xpd6, Qc5xnb4, Qc5-d4, Qc5-e3, Qc5-f2, Qc5-g1, Qb7-a8, Qb7-c8, Qb7-a6, Qb7xrc6, Qc7-b8, Qc7-d8, Qc7xnb6, Qc7xpd6]",
+		"[qd8-c8, qd8-b8, qd8-d7, qd8-d6, qd8-d5, qd8xPd4, qd8-c7]",
+	}
+
+	board := NewBoard()
+	mlist := base.MoveList{}
+
+	for i, fen := range fens {
+		board.SetFEN(fen)
+		mlist.Clear()
+		board.GenerateQueenMoves(&mlist, board.Player)
+		strmoves := mlist.String()
+		if strmoves != results[i] {
+			t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, results[i], &mlist)
+		}
+	}
+}
+
+func TestGenerateRookMoves(t *testing.T) {
+	fens := []string{
+		"r2qkbnr/pp2p1Pp/1np1b3/3pPp2/3P4/8/PPP2PP1/RNBQKBNR w KQkq f6 0 8",
+		"8/5k2/2p5/2R5/2p1b3/2K5/1r2R3/1R3n2 w - - 0 1",
+	}
+	results := []string{
+		"[Rh1-h2, Rh1-h3, Rh1-h4, Rh1-h5, Rh1-h6, Rh1xph7]",
+		"[Rb1-a1, Rb1xrb2, Rb1-c1, Rb1-d1, Rb1-e1, Rb1xnf1, Re2-d2, Re2-c2, Re2xrb2, Re2-e3, Re2xbe4, Re2-f2, Re2-g2, Re2-h2, Re2-e1, Rc5-b5, Rc5-a5, Rc5xpc6, Rc5-d5, Rc5-e5, Rc5-f5, Rc5-g5, Rc5-h5, Rc5xpc4]",
+	}
+
+	board := NewBoard()
+	mlist := base.MoveList{}
+
+	for i, fen := range fens {
+		board.SetFEN(fen)
+		mlist.Clear()
+		board.GenerateRookMoves(&mlist, board.Player)
+		strmoves := mlist.String()
+		if strmoves != results[i] {
+			t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, results[i], &mlist)
+		}
+	}
+}
+
+func TestGenerateBishopMoves(t *testing.T) {
+	fens := []string{
+		"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+		"r3k2r/pppq1ppp/2npbn2/2b1p3/2B1P3/2NPBN2/PPPQ1PPP/R3K2R w KQkq - 4 8",
+	}
+	results := []string{
+		"[]",
+		"[Be3-d4, Be3xbc5, Be3-f4, Be3-g5, Be3-h6, Bc4-b5, Bc4-a6, Bc4-d5, Bc4xbe6, Bc4-b3]",
+	}
+
+	board := NewBoard()
+	mlist := base.MoveList{}
+
+	for i, fen := range fens {
+		board.SetFEN(fen)
+		mlist.Clear()
+		board.GenerateBishopMoves(&mlist, board.Player)
+		strmoves := mlist.String()
+		if strmoves != results[i] {
+			t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, results[i], &mlist)
+		}
+	}
+}
+
 func TestGenerateKnightMoves(t *testing.T) {
 	fens := []string{
 		"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",

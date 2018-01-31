@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/dbriemann/chesskimo/base"
@@ -262,7 +261,6 @@ func (b *Board) GenerateKingMoves(mlist *base.MoveList, color base.Color) {
 	move := base.Move{}
 	piece := base.KING | color
 
-	fmt.Println("CHECK SHORT")
 	// Try castling first.
 	// a. king-side
 	// If castling king-side is still allowed..
@@ -282,7 +280,6 @@ func (b *Board) GenerateKingMoves(mlist *base.MoveList, color base.Color) {
 
 SKIP_CASTLING_SHORT:
 
-	fmt.Println("CHECK LONG")
 	// b. queen-side
 	// If castling queen side is still allowed..
 	if b.CastleLong[color] {
@@ -301,7 +298,6 @@ SKIP_CASTLING_SHORT:
 
 SKIP_CASTLING_LONG:
 
-	fmt.Println("CHECK NORMAL")
 	// Now add all normal moves.
 	for _, dir := range base.KING_DIRS {
 		to = base.Square(int8(from) + dir)
