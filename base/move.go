@@ -33,13 +33,14 @@ func NewMove(from, to Square, ptype, captype, promtype Piece, eptype, castletype
 }
 
 func (m *Move) String() string {
+	// TODO - this should be somewhat performant in the end
+	// byte buffers?!
+
 	if m.CastleType == CASTLE_TYPE_SHORT {
 		return "0-0"
 	} else if m.CastleType == CASTLE_TYPE_LONG {
 		return "0-0-0"
 	}
-	// TODO - this should be somewhat performant in the end
-	// byte buffers?!
 	str := ""
 	//	if !m.PieceType.IsType(PAWN) {
 	str += PrintMap[m.PieceType]

@@ -1,10 +1,11 @@
 package base
 
-// Piece, Color and Square are basically the same type (aliases)
-// but for clear clarifications we use different type names.
+// Piece, Color, Square and Info are basically the same type (aliases)
+// but for clear declarations we use different type names.
 type Piece uint8
 type Color = Piece
 type Square = Piece
+type Info = Piece
 
 const (
 	// Various
@@ -62,6 +63,13 @@ const (
 	DOWN_RIGHT = DOWN + RIGHT
 )
 
+const (
+	INFO_NONE Info = iota
+	INFO_ATTACKED
+	INFO_MAYBE_PINNED
+	INFO_PINNED
+)
+
 var (
 	// BLACK == 0, WHITE == 1
 	PAWN_PUSH_DIRS    = [2]int8{DOWN, UP}
@@ -75,6 +83,17 @@ var (
 	KING_DIRS           = [8]int8{RIGHT, LEFT, UP, DOWN, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT}
 	CASTLING_PATH_SHORT = [2][2]Square{{0x75, 0x76}, {0x5, 0x6}}
 	CASTLING_PATH_LONG  = [2][3]Square{{0x73, 0x72, 0x71}, {0x1, 0x2, 0x3}}
+
+	INFO_BOARD_INDEXES = [64]Square{
+		0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+		0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+		0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
+		0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
+		0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
+		0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f,
+		0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
+		0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f,
+	}
 )
 
 var (
@@ -152,4 +171,8 @@ func (sq Square) IsPawnBaseRank(color Color) bool {
 func (sq Square) IsPawnPromoting(color Color) bool {
 	// color MUST BE 0 or 1
 	return PAWN_PROMOTE_RANK[color] == sq.Rank()
+}
+
+func (sq Square) ToInfoIndex() Square {
+	return sq + 8
 }
