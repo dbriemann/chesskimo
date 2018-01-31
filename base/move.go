@@ -4,6 +4,10 @@ const (
 	EP_TYPE_NONE = iota
 	EP_TYPE_CAPTURE
 	EP_TYPE_CREATE
+
+	CASTLE_TYPE_NONE = iota
+	CASTLE_TYPE_SHORT
+	CASTLE_TYPE_LONG
 )
 
 type Move struct {
@@ -29,6 +33,11 @@ func NewMove(from, to Square, ptype, captype, promtype Piece, eptype, castletype
 }
 
 func (m *Move) String() string {
+	if m.CastleType == CASTLE_TYPE_SHORT {
+		return "0-0"
+	} else if m.CastleType == CASTLE_TYPE_LONG {
+		return "0-0-0"
+	}
 	// TODO - this should be somewhat performant in the end
 	// byte buffers?!
 	str := ""

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/dbriemann/chesskimo/base"
@@ -160,14 +161,14 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 		to = base.Square(int8(from) + base.PAWN_CAPTURE_DIRS[oppColor][0])
 		tpiece = b.Squares[to]
 		if to.IsLegal() && tpiece.HasColor(color) {
-			move = base.NewMove(to, from, piece, base.PAWN|oppColor, base.NO_PIECE, base.EP_TYPE_CAPTURE, base.NONE)
+			move = base.NewMove(to, from, piece, base.PAWN|oppColor, base.NO_PIECE, base.EP_TYPE_CAPTURE, base.CASTLE_TYPE_NONE)
 			mlist.Put(move)
 		}
 
 		to = base.Square(int8(from) + base.PAWN_CAPTURE_DIRS[oppColor][1])
 		tpiece = b.Squares[to]
 		if to.IsLegal() && tpiece.HasColor(color) {
-			move = base.NewMove(to, from, piece, base.PAWN|oppColor, base.NO_PIECE, base.EP_TYPE_CAPTURE, base.NONE)
+			move = base.NewMove(to, from, piece, base.PAWN|oppColor, base.NO_PIECE, base.EP_TYPE_CAPTURE, base.CASTLE_TYPE_NONE)
 			mlist.Put(move)
 		}
 	}
@@ -186,11 +187,11 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 				// We also have to check if the capture is also a promotion.
 				if to.IsPawnPromoting(color) {
 					for prom := base.QUEEN; prom >= base.KNIGHT; prom >>= 1 {
-						move = base.NewMove(from, to, piece, tpiece, prom|color, base.EP_TYPE_NONE, base.NONE)
+						move = base.NewMove(from, to, piece, tpiece, prom|color, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
 						mlist.Put(move)
 					}
 				} else {
-					move = base.NewMove(from, to, piece, tpiece, base.NO_PIECE, base.EP_TYPE_NONE, base.NONE)
+					move = base.NewMove(from, to, piece, tpiece, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
 					mlist.Put(move)
 				}
 			}
@@ -202,11 +203,11 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 		if b.Squares[to].IsEmpty() {
 			if to.IsPawnPromoting(color) {
 				for prom := base.QUEEN; prom >= base.KNIGHT; prom >>= 1 {
-					move = base.NewMove(from, to, piece, base.NO_PIECE, prom|color, base.EP_TYPE_NONE, base.NONE)
+					move = base.NewMove(from, to, piece, base.NO_PIECE, prom|color, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
 					mlist.Put(move)
 				}
 			} else {
-				move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.NONE)
+				move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
 				mlist.Put(move)
 			}
 		}
@@ -214,7 +215,7 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 		if from.IsPawnBaseRank(color) {
 			to = base.Square(int8(to) + base.PAWN_PUSH_DIRS[color])
 			if b.Squares[to].IsEmpty() {
-				move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_CREATE, base.NONE)
+				move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_CREATE, base.CASTLE_TYPE_NONE)
 				mlist.Put(move)
 			}
 		}
@@ -240,14 +241,81 @@ func (b *Board) GenerateKnightMoves(mlist *base.MoveList, color base.Color) {
 				tpiece = b.Squares[to]
 				if tpiece.IsEmpty() {
 					// Add a normal move.
-					move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.NONE)
+					move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
 					mlist.Put(move)
 				} else if tpiece.HasColor(oppColor) {
 					// Add a capture move.
-					move = base.NewMove(from, to, piece, tpiece, base.NO_PIECE, base.EP_TYPE_NONE, base.NONE)
+					move = base.NewMove(from, to, piece, tpiece, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
 					mlist.Put(move)
 				} // Else the square is occupied by own piece.
 			} // Else target is outside of board.
+		}
+	}
+}
+
+// GenerateKingMoves generates all pseudo legal king moves for the given color
+// and stores them in the given MoveList.
+func (b *Board) GenerateKingMoves(mlist *base.MoveList, color base.Color) {
+	from, to := b.Kings[color], base.OTB
+	tpiece := base.NO_PIECE
+	oppColor := color.FlipColor()
+	move := base.Move{}
+	piece := base.KING | color
+
+	fmt.Println("CHECK SHORT")
+	// Try castling first.
+	// a. king-side
+	// If castling king-side is still allowed..
+	if b.CastleShort[color] {
+		// test if the squares on short castling path are clear.
+		for _, sq := range base.CASTLING_PATH_SHORT[color] {
+			tpiece = b.Squares[sq]
+			if !tpiece.IsEmpty() {
+				goto SKIP_CASTLING_SHORT
+			}
+		}
+		// All squares on the path are clear -> add castle short move.
+		to = base.CASTLING_PATH_SHORT[color][1]
+		move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_SHORT)
+		mlist.Put(move)
+	}
+
+SKIP_CASTLING_SHORT:
+
+	fmt.Println("CHECK LONG")
+	// b. queen-side
+	// If castling queen side is still allowed..
+	if b.CastleLong[color] {
+		// test if the squares on long castling path are clear.
+		for _, sq := range base.CASTLING_PATH_LONG[color] {
+			tpiece = b.Squares[sq]
+			if !tpiece.IsEmpty() {
+				goto SKIP_CASTLING_LONG
+			}
+		}
+		// All squares on the path are clear -> add castle short move.
+		to = base.CASTLING_PATH_LONG[color][1]
+		move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_LONG)
+		mlist.Put(move)
+	}
+
+SKIP_CASTLING_LONG:
+
+	fmt.Println("CHECK NORMAL")
+	// Now add all normal moves.
+	for _, dir := range base.KING_DIRS {
+		to = base.Square(int8(from) + dir)
+		if to.IsLegal() {
+			tpiece = b.Squares[to]
+			if tpiece.IsEmpty() {
+				// ADD NORMAL MOVE
+				move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
+				mlist.Put(move)
+			} else if tpiece.HasColor(oppColor) {
+				// ADD CAPTURE MOVE
+				move = base.NewMove(from, to, piece, tpiece, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
+				mlist.Put(move)
+			}
 		}
 	}
 }
@@ -301,12 +369,12 @@ func (b *Board) GenerateSlidingMoves(mlist *base.MoveList, color base.Color, pty
 					} else {
 						if tpiece.IsEmpty() {
 							// Add a normal move.
-							move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.NONE)
+							move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
 							mlist.Put(move)
 							// And continue in current direction.
 						} else {
 							// Add a capture move.
-							move = base.NewMove(from, to, piece, tpiece, base.NO_PIECE, base.EP_TYPE_NONE, base.NONE)
+							move = base.NewMove(from, to, piece, tpiece, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
 							mlist.Put(move)
 							// And go to next direction.
 							break

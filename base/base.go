@@ -51,6 +51,32 @@ const (
 	WKING   Piece = KING | WHITE
 )
 
+const (
+	UP         = 16
+	DOWN       = -16
+	LEFT       = -1
+	RIGHT      = +1
+	UP_LEFT    = UP + LEFT
+	UP_RIGHT   = UP + RIGHT
+	DOWN_LEFT  = DOWN + LEFT
+	DOWN_RIGHT = DOWN + RIGHT
+)
+
+var (
+	// BLACK == 0, WHITE == 1
+	PAWN_PUSH_DIRS    = [2]int8{DOWN, UP}
+	PAWN_CAPTURE_DIRS = [2][2]int8{{DOWN_LEFT, DOWN_RIGHT}, {UP_LEFT, UP_RIGHT}}
+	PAWN_BASE_RANK    = [2]Square{6, 1}
+	PAWN_PROMOTE_RANK = [2]Square{0, 7}
+
+	KNIGHT_DIRS         = [8]int8{UP + UP_LEFT, UP + UP_RIGHT, DOWN + DOWN_LEFT, DOWN + DOWN_RIGHT, LEFT + UP_LEFT, LEFT + DOWN_LEFT, RIGHT + UP_RIGHT, RIGHT + DOWN_RIGHT}
+	DIAGONAL_DIRS       = [4]int8{UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT}
+	ORTHOGONAL_DIRS     = [4]int8{LEFT, UP, RIGHT, DOWN}
+	KING_DIRS           = [8]int8{RIGHT, LEFT, UP, DOWN, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT}
+	CASTLING_PATH_SHORT = [2][2]Square{{0x75, 0x76}, {0x5, 0x6}}
+	CASTLING_PATH_LONG  = [2][3]Square{{0x73, 0x72, 0x71}, {0x1, 0x2, 0x3}}
+)
+
 var (
 	PrintMap = map[Piece]string{
 		BPAWN:   "p",
