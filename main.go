@@ -27,7 +27,7 @@ func main() {
 		b.SetFEN(fen)
 		fmt.Println(&b)
 		mlist.Clear()
-		b.FindAttacksAndPins(b.Player)
+		b.FindAttackedAndPinned(b.Player)
 
 		//		b.GenerateKingMoves(&mlist, b.Player)
 		//		b.GenerateQueenMoves(&mlist, b.Player)

@@ -66,7 +66,6 @@ const (
 const (
 	INFO_NONE Info = iota
 	INFO_ATTACKED
-	INFO_MAYBE_PINNED
 	INFO_PINNED
 )
 

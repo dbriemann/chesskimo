@@ -149,121 +149,89 @@ func (b *Board) clearInfoBoard() {
 // FindAttacksAndPins searches the board state for all attacked squares and pinned pieces.
 // It then stores the information in the OTB area of the 0x88 board (the right side). The
 // information is then used by the move generation functions to avoid illegal moves (TODO).
-func (b *Board) FindAttacksAndPins(color base.Color) {
+func (b *Board) FindAttackedAndPinned(color base.Color) {
 	oppColor := color.FlipColor()
 	to := base.OTB
 	// Clear old info data.
 	b.clearInfoBoard()
 	b.IsCheck = false
 
-	from := base.Square(0)
-	// Find all squares attacked by opposing kings.
-	//	from := b.Kings[oppColor]
-	//	for _, dir := range base.KING_DIRS {
-	//		to = base.Square(int8(from) + dir)
-	//		if to.IsLegal() {
-	//			b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
-	//		}
-	//	}
-
-	// Find all squares attacked by opposing pawns.
-	//	for i := uint8(0); i < b.Pawns[oppColor].Size; i++ {
-	//		from = b.Pawns[oppColor].Pieces[i]
-	//		fmt.Println("from ", base.PrintBoardIndex[from])
-	//		for _, dir := range base.PAWN_CAPTURE_DIRS[oppColor] {
-	//			to = base.Square(int8(from) + dir)
-	//			if to.IsLegal() {
-	//				b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
-	//			}
-	//		}
-	//	}
-
-	// Find all squares attacked by opposing knights.
-	//	for i := uint8(0); i < b.Knights[oppColor].Size; i++ {
-	//		from = b.Knights[oppColor].Pieces[i]
-	//		for _, dir := range base.KNIGHT_DIRS {
-	//			to = base.Square(int8(from) + dir)
-	//			if to.IsLegal() {
-	//				b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
-	//			}
-	//		}
-	//	}
-
-	bishops := &b.Bishops[oppColor]
-	rooks := &b.Rooks[oppColor]
-	for round := 1; round <= 2; round++ {
-		// Find all squares attacked by opposing bishops
-		// and by queens in the second iteration.
-		// (diagonal sliders)
-		for i := uint8(0); i < bishops.Size; i++ {
-			from = bishops.Pieces[i]
-			for _, dir := range base.DIAGONAL_DIRS {
-				for steps := int8(1); ; steps++ {
-					to = base.Square(int8(from) + dir*steps)
-					if to.IsLegal() {
-						tpiece := b.Squares[to]
-						if tpiece.HasColor(oppColor) {
-							// Blocked by brethren.
-							break
-						} else if tpiece.HasColor(color) {
-							// Test for check first
-							if tpiece.IsType(base.KING) {
-								b.IsCheck = true
-								break
-							}
-							// May be a pin -> mark for later.
-							b.Squares[to.ToInfoIndex()] = base.INFO_MAYBE_PINNED
-							break
-						} else {
-							// Empty field is just marked as attacked.
-							b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
-						}
-					} else {
-						break
-					}
-				}
-			}
+	//	 Find all squares attacked by opposing kings.
+	from := b.Kings[oppColor]
+	for _, dir := range base.KING_DIRS {
+		to = base.Square(int8(from) + dir)
+		if to.IsLegal() {
+			b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
 		}
-
-		// Find all squares attacked by opposing rooks
-		// and by queens in the second iteration.
-		// (orthogonal sliders)
-		for i := uint8(0); i < rooks.Size; i++ {
-			from = rooks.Pieces[i]
-			for _, dir := range base.ORTHOGONAL_DIRS {
-				for steps := int8(1); ; steps++ {
-					to = base.Square(int8(from) + dir*steps)
-					if to.IsLegal() {
-						tpiece := b.Squares[to]
-						if tpiece.HasColor(oppColor) {
-							// Blocked by brethren.
-							break
-						} else if tpiece.HasColor(color) {
-							// Test for check first
-							if tpiece.IsType(base.KING) {
-								b.IsCheck = true
-								break
-							}
-							// May be a pin -> mark for later.
-							b.Squares[to.ToInfoIndex()] = base.INFO_MAYBE_PINNED
-						} else {
-							// Empty field is just marked as attacked.
-							b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
-						}
-					} else {
-						break
-					}
-				}
-			}
-		}
-
-		// After bishops and rooks have been checked replace them
-		// by the queens list, and reuse the code above.
-		bishops = &b.Queens[oppColor]
-		rooks = &b.Queens[oppColor]
 	}
 
-	fmt.Println("????")
+	//	 Find all squares attacked by opposing pawns.
+	for i := uint8(0); i < b.Pawns[oppColor].Size; i++ {
+		from = b.Pawns[oppColor].Pieces[i]
+		for _, dir := range base.PAWN_CAPTURE_DIRS[oppColor] {
+			to = base.Square(int8(from) + dir)
+			if to.IsLegal() {
+				b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
+			}
+		}
+	}
+
+	//	 Find all squares attacked by opposing knights.
+	for i := uint8(0); i < b.Knights[oppColor].Size; i++ {
+		from = b.Knights[oppColor].Pieces[i]
+		for _, dir := range base.KNIGHT_DIRS {
+			to = base.Square(int8(from) + dir)
+			if to.IsLegal() {
+				b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
+			}
+		}
+	}
+
+	// All sliding operations are done with the same loop, by alternating the piecelist and directions list.
+	// First bishops and queens are tested for diagonal attacks then rooks and queens are tested for orthogonal attacks.
+	piecelist := [4]*base.PieceList{&b.Bishops[oppColor], &b.Queens[oppColor], &b.Rooks[oppColor], &b.Queens[oppColor]}
+	directions := [4]*[4]int8{&base.DIAGONAL_DIRS, &base.DIAGONAL_DIRS, &base.ORTHOGONAL_DIRS, &base.ORTHOGONAL_DIRS}
+
+	// Iterate piece lists and corresponding directions.
+	for idx := 0; idx < 4; idx++ {
+		for i := uint8(0); i < piecelist[idx].Size; i++ {
+			from = piecelist[idx].Pieces[i]
+			for _, dir := range directions[idx] {
+				for steps := int8(1); ; steps++ {
+					to = base.Square(int8(from) + dir*steps)
+					if to.IsLegal() {
+						tpiece := b.Squares[to]
+						if tpiece.HasColor(oppColor) {
+							// Blocked by brethren. Still mark as attacked.
+							b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
+							break
+						} else if tpiece.HasColor(color) {
+							// Mark as attacked. If it is a pin it will be detected later.
+							b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
+							break
+						} else {
+							// Empty field is just marked as attacked.
+							b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
+						}
+					} else {
+						break
+					}
+				}
+			}
+
+		}
+	}
+
+	// Detect check.
+	kingSq := b.Kings[color]
+	if b.Squares[kingSq.ToInfoIndex()] == base.INFO_ATTACKED {
+		b.IsCheck = true
+	}
+
+	// Detect pins involving the king.
+	kingRank := kingSq.Rank()
+	kingFile := kingSq.File()
+
 	fmt.Println(b.InfoBoardString())
 	//	for _, idx := range base.INFO_BOARD_INDEXES {
 	//		fmt.Print(int(b.Squares[idx]))
@@ -393,6 +361,10 @@ func (b *Board) GenerateKingMoves(mlist *base.MoveList, color base.Color) {
 	move := base.Move{}
 	piece := base.KING | color
 
+	if b.IsCheck {
+		// Cannot castle when in check.
+		goto SKIP_ALL_CASTLING
+	}
 	// Try castling first.
 	// a. king-side
 	// If castling king-side is still allowed..
@@ -429,6 +401,7 @@ SKIP_CASTLING_SHORT:
 	}
 
 SKIP_CASTLING_LONG:
+SKIP_ALL_CASTLING:
 
 	// Now add all normal moves.
 	for _, dir := range base.KING_DIRS {
