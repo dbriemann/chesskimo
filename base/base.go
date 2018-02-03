@@ -25,15 +25,16 @@ const (
 
 	// Pieces:
 	// TODO: should NO_PIECE equal EMPTY??
-	NO_PIECE   Piece = 0   // For special usage only
-	EMPTY      Piece = 128 // 10000000
-	PAWN       Piece = 2   // 00000010
-	KNIGHT     Piece = 4   // 00000100
-	BISHOP     Piece = 8   // 00000000
-	ROOK       Piece = 16  // 00010000
-	QUEEN      Piece = 32  // 00100000
-	KING       Piece = 64  // 01000000
-	PIECE_MASK Piece = 126 // 01111110
+	NO_PIECE     Piece = 0   // For special usage only
+	EMPTY        Piece = 128 // 10000000
+	PAWN         Piece = 2   // 00000010
+	KNIGHT       Piece = 4   // 00000100
+	BISHOP       Piece = 8   // 00001000
+	ROOK         Piece = 16  // 00010000
+	QUEEN        Piece = 32  // 00100000
+	KING         Piece = 64  // 01000000
+	PIECE_MASK   Piece = 126 // 01111110
+	PINNERS_MASK Piece = 56  // 00111000
 )
 
 const (

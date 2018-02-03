@@ -43,16 +43,92 @@ type Board struct {
 
 const ()
 
-// Lookup0x88 maps the indexes of a 8x8 MinBoard to the 0x88 board indexes.
-var Lookup0x88 = [64]base.Square{
-	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-	0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
-	0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
-	0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
-	0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
-	0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67,
-	0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77,
+var (
+	// Lookup0x88 maps the indexes of a 8x8 MinBoard to the 0x88 board indexes.
+	Lookup0x88 = [64]base.Square{
+		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+		0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+		0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
+		0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
+		0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
+		0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
+		0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67,
+		0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77,
+	}
+	SQUARE_DIFFS = [240]base.Square{}
+)
+
+func init() {
+	// Populate the diff map.
+	for _, from := range Lookup0x88 {
+		for _, to := range Lookup0x88 {
+			diff := uint8(0x77 + (int8(from) - int8(to)))
+			pbits := base.Piece(0) // Resulting bitset.
+
+			// Test if diff is a possible move for all types of pieces.
+			// diagonal sliders:
+			for _, dir := range base.DIAGONAL_DIRS {
+				for steps := int8(1); ; steps++ {
+					target := base.Square(int8(from) + steps*dir)
+					if !target.IsLegal() {
+						// We left the board -> next dir.
+						break
+					}
+
+					if target == to {
+						// Can be reachedby queens and bishops (diagonally).
+						pbits |= (base.BISHOP | base.QUEEN)
+						// The goto acts as a double break.
+						goto DIAGONAL_INSPECTION_FINISHED
+					}
+				}
+			}
+
+		DIAGONAL_INSPECTION_FINISHED:
+
+			// orthogonal sliders:
+			for _, dir := range base.ORTHOGONAL_DIRS {
+				for steps := int8(1); ; steps++ {
+					target := base.Square(int8(from) + steps*dir)
+					if !target.IsLegal() {
+						// We left the board -> next dir.
+						break
+					}
+
+					if target == to {
+						// Can be reachedby queens and bishops (diagonally).
+						pbits |= (base.ROOK | base.QUEEN)
+						// The goto acts as a double break.
+						goto ORTHOGONAL_INSPECTION_FINISHED
+					}
+				}
+			}
+
+		ORTHOGONAL_INSPECTION_FINISHED:
+
+			// knights:
+			for _, dir := range base.KNIGHT_DIRS {
+				target := base.Square(int8(from) + dir)
+
+				if target == to {
+					pbits |= base.KNIGHT
+					break
+				}
+			}
+
+			// kings:
+			for _, dir := range base.KING_DIRS {
+				target := base.Square(int8(from) + dir)
+
+				if target == to {
+					pbits |= base.KING
+					break
+				}
+			}
+
+			SQUARE_DIFFS[diff] = pbits
+		}
+	}
 }
 
 func NewBoard() Board {
@@ -229,8 +305,8 @@ func (b *Board) FindAttackedAndPinned(color base.Color) {
 	}
 
 	// Detect pins involving the king.
-	kingRank := kingSq.Rank()
-	kingFile := kingSq.File()
+	//	kingRank := kingSq.Rank()
+	//	kingFile := kingSq.File()
 
 	fmt.Println(b.InfoBoardString())
 	//	for _, idx := range base.INFO_BOARD_INDEXES {

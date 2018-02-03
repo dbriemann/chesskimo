@@ -6,6 +6,42 @@ import (
 	"github.com/dbriemann/chesskimo/base"
 )
 
+func TestSquareDiffs(t *testing.T) {
+	type set struct {
+		From   base.Square
+		To     base.Square
+		Pieces base.Piece
+	}
+
+	testset := []set{
+		set{0x72, 0x12, base.ROOK | base.QUEEN},               // file test down to up
+		set{0x12, 0x72, base.ROOK | base.QUEEN},               // file test up to down
+		set{0x51, 0x54, base.ROOK | base.QUEEN},               // rank test left to right
+		set{0x54, 0x51, base.ROOK | base.QUEEN},               // rank test right to left
+		set{0x64, 0x37, base.BISHOP | base.QUEEN},             // diagonal up_left to down_right test
+		set{0x37, 0x64, base.BISHOP | base.QUEEN},             // diagonal down_right to up_left test
+		set{0x77, 0x0, base.BISHOP | base.QUEEN},              // diagonal up_right to down_left test
+		set{0x0, 0x77, base.BISHOP | base.QUEEN},              // diagonal down_left to up_right test
+		set{0x0, 0x12, base.KNIGHT},                           // knight jump right+up_right
+		set{0x0, 0x21, base.KNIGHT},                           // knight jump up+up_right
+		set{0x77, 0x56, base.KNIGHT},                          // knight jump down+down_left
+		set{0x77, 0x65, base.KNIGHT},                          // knight jump left+down_left
+		set{0x74, 0x65, base.KING | base.QUEEN | base.BISHOP}, // one step diagonal (king test)
+		set{0x4, 0x5, base.KING | base.QUEEN | base.ROOK},     // one step orthogonal (king test)
+		// impossible moves
+		set{0x0, 0x71, base.NO_PIECE},
+		set{0x5, 0x36, base.NO_PIECE},
+	}
+
+	for i, ts := range testset {
+		diff := 0x77 + ts.From - ts.To
+		lookup := SQUARE_DIFFS[diff]
+		if !(lookup == ts.Pieces) {
+			t.Fatalf("Test %d from %s to %s should be reachable by pieces %d but result ist %d\n", i, base.PrintBoardIndex[ts.From], base.PrintBoardIndex[ts.To], ts.Pieces, lookup)
+		}
+	}
+}
+
 func TestGenerateKingMoves(t *testing.T) {
 	fens := []string{
 		"r3k2r/pppq1ppp/2npbn2/2b1p3/2B1P3/2NPBN2/PPPQ1PPP/R3K2R w KQkq - 4 8",
