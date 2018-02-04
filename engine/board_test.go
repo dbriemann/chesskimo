@@ -42,6 +42,41 @@ func TestSquareDiffs(t *testing.T) {
 	}
 }
 
+func TestDiffDirss(t *testing.T) {
+	type set struct {
+		From base.Square
+		To   base.Square
+		Dir  int8
+	}
+
+	testset := []set{
+		set{0x70, 0x07, base.DOWN_RIGHT},
+		set{0x47, 0x65, base.UP_LEFT},
+		set{0x77, 0x11, base.DOWN_LEFT},
+		set{0x24, 0x46, base.UP_RIGHT},
+		set{0x61, 0x66, base.RIGHT},
+		set{0x33, 0x30, base.LEFT},
+		set{0x22, 0x62, base.UP},
+		set{0x55, 0x25, base.DOWN},
+		set{0x00, 0x12, base.RIGHT + base.UP_RIGHT},
+		set{0x00, 0x21, base.UP + base.UP_RIGHT},
+		set{0x70, 0x62, base.RIGHT + base.DOWN_RIGHT},
+		set{0x70, 0x51, base.DOWN + base.DOWN_RIGHT},
+		set{0x77, 0x65, base.LEFT + base.DOWN_LEFT},
+		set{0x77, 0x56, base.DOWN + base.DOWN_LEFT},
+		set{0x07, 0x15, base.LEFT + base.UP_LEFT},
+		set{0x07, 0x26, base.UP + base.UP_LEFT},
+	}
+
+	for i, ts := range testset {
+		diff := 0x77 + ts.From - ts.To
+		lookup := DIFF_DIRS[diff]
+		if !(lookup == ts.Dir) {
+			t.Fatalf("Test %d from %s to %s should be dir %d but result ist %d\n", i, base.PrintBoardIndex[ts.From], base.PrintBoardIndex[ts.To], ts.Dir, lookup)
+		}
+	}
+}
+
 func TestGenerateKingMoves(t *testing.T) {
 	fens := []string{
 		"r3k2r/pppq1ppp/2npbn2/2b1p3/2B1P3/2NPBN2/PPPQ1PPP/R3K2R w KQkq - 4 8",

@@ -28,11 +28,11 @@ type Board struct {
 	Squares     [64 * 2]base.Piece
 	CastleShort [2]bool
 	CastleLong  [2]bool
-	IsCheck     bool
-	EpSquare    base.Square
-	Player      base.Color
+	CheckType   uint16
 	MoveNumber  uint16
 	DrawCounter uint16
+	EpSquare    base.Square
+	Player      base.Color
 	Kings       [2]base.Square
 	Queens      [2]base.PieceList
 	Rooks       [2]base.PieceList
@@ -41,7 +41,15 @@ type Board struct {
 	Pawns       [2]base.PieceList
 }
 
-const ()
+const (
+	CHECK_NONE    = 0
+	CHECK_PAWN    = 1
+	CHECK_KNIGHT  = 2
+	CHECK_BISHOP  = 3
+	CHECK_ROOK    = 4
+	CHECK_QUEEN   = 5
+	CHECK_UNKNOWN = 666 // TODO - just here temporarily
+)
 
 var (
 	// Lookup0x88 maps the indexes of a 8x8 MinBoard to the 0x88 board indexes.
@@ -55,17 +63,32 @@ var (
 		0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67,
 		0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77,
 	}
-	SQUARE_DIFFS = [240]base.Square{}
+	SQUARE_DIFFS = [240]base.Piece{}
+	DIFF_DIRS    = [240]int8{}
 )
 
 func init() {
-	// Populate the diff map.
+	populateDiffMaps()
+}
+
+func populateDiffMaps() {
+	diffdir := int8(0)
 	for _, from := range Lookup0x88 {
 		for _, to := range Lookup0x88 {
 			diff := uint8(0x77 + (int8(from) - int8(to)))
 			pbits := base.Piece(0) // Resulting bitset.
 
 			// Test if diff is a possible move for all types of pieces.
+			// kings:
+			for _, dir := range base.KING_DIRS {
+				target := base.Square(int8(from) + dir)
+
+				if target == to {
+					pbits |= base.KING
+					break
+				}
+			}
+
 			// diagonal sliders:
 			for _, dir := range base.DIAGONAL_DIRS {
 				for steps := int8(1); ; steps++ {
@@ -76,15 +99,15 @@ func init() {
 					}
 
 					if target == to {
+						diffdir = dir
 						// Can be reachedby queens and bishops (diagonally).
 						pbits |= (base.BISHOP | base.QUEEN)
 						// The goto acts as a double break.
-						goto DIAGONAL_INSPECTION_FINISHED
+						// Skipping orthos and knights.
+						goto INSPECTION_FINISHED
 					}
 				}
 			}
-
-		DIAGONAL_INSPECTION_FINISHED:
 
 			// orthogonal sliders:
 			for _, dir := range base.ORTHOGONAL_DIRS {
@@ -96,36 +119,30 @@ func init() {
 					}
 
 					if target == to {
+						diffdir = dir
 						// Can be reachedby queens and bishops (diagonally).
 						pbits |= (base.ROOK | base.QUEEN)
 						// The goto acts as a double break.
-						goto ORTHOGONAL_INSPECTION_FINISHED
+						// Skipping knights.
+						goto INSPECTION_FINISHED
 					}
 				}
 			}
-
-		ORTHOGONAL_INSPECTION_FINISHED:
 
 			// knights:
 			for _, dir := range base.KNIGHT_DIRS {
 				target := base.Square(int8(from) + dir)
 
 				if target == to {
+					diffdir = dir
 					pbits |= base.KNIGHT
 					break
 				}
 			}
 
-			// kings:
-			for _, dir := range base.KING_DIRS {
-				target := base.Square(int8(from) + dir)
+		INSPECTION_FINISHED:
 
-				if target == to {
-					pbits |= base.KING
-					break
-				}
-			}
-
+			DIFF_DIRS[diff] = diffdir
 			SQUARE_DIFFS[diff] = pbits
 		}
 	}
@@ -213,16 +230,23 @@ func (b *Board) SetFEN(fenstr string) error {
 		}
 	}
 
+	// TODO test for checks.
+
 	return nil
 }
 
 func (b *Board) clearInfoBoard() {
 	for _, idx := range base.INFO_BOARD_INDEXES {
-		b.Squares[idx] = base.INFO_NONE
+		b.Squares[idx] = base.OTB
 	}
 }
 
-// FindAttacksAndPins searches the board state for all attacked squares and pinned pieces.
+//TODO
+//func (b *Board) attackedBy(sq base.Square) base.Square {
+
+//}
+
+// FindAttackedAndPinned searches the board state for all attacked squares and pinned pieces.
 // It then stores the information in the OTB area of the 0x88 board (the right side). The
 // information is then used by the move generation functions to avoid illegal moves (TODO).
 func (b *Board) FindAttackedAndPinned(color base.Color) {
@@ -230,14 +254,14 @@ func (b *Board) FindAttackedAndPinned(color base.Color) {
 	to := base.OTB
 	// Clear old info data.
 	b.clearInfoBoard()
-	b.IsCheck = false
+	b.CheckType = CHECK_NONE
 
 	//	 Find all squares attacked by opposing kings.
 	from := b.Kings[oppColor]
 	for _, dir := range base.KING_DIRS {
 		to = base.Square(int8(from) + dir)
 		if to.IsLegal() {
-			b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
+			b.Squares[to.ToInfoIndex()] = from
 		}
 	}
 
@@ -247,7 +271,7 @@ func (b *Board) FindAttackedAndPinned(color base.Color) {
 		for _, dir := range base.PAWN_CAPTURE_DIRS[oppColor] {
 			to = base.Square(int8(from) + dir)
 			if to.IsLegal() {
-				b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
+				b.Squares[to.ToInfoIndex()] = from
 			}
 		}
 	}
@@ -258,7 +282,7 @@ func (b *Board) FindAttackedAndPinned(color base.Color) {
 		for _, dir := range base.KNIGHT_DIRS {
 			to = base.Square(int8(from) + dir)
 			if to.IsLegal() {
-				b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
+				b.Squares[to.ToInfoIndex()] = from
 			}
 		}
 	}
@@ -279,15 +303,15 @@ func (b *Board) FindAttackedAndPinned(color base.Color) {
 						tpiece := b.Squares[to]
 						if tpiece.HasColor(oppColor) {
 							// Blocked by brethren. Still mark as attacked.
-							b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
+							b.Squares[to.ToInfoIndex()] = from
 							break
 						} else if tpiece.HasColor(color) {
 							// Mark as attacked. If it is a pin it will be detected later.
-							b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
+							b.Squares[to.ToInfoIndex()] = from
 							break
 						} else {
 							// Empty field is just marked as attacked.
-							b.Squares[to.ToInfoIndex()] = base.INFO_ATTACKED
+							b.Squares[to.ToInfoIndex()] = from
 						}
 					} else {
 						break
@@ -300,13 +324,23 @@ func (b *Board) FindAttackedAndPinned(color base.Color) {
 
 	// Detect check.
 	kingSq := b.Kings[color]
-	if b.Squares[kingSq.ToInfoIndex()] == base.INFO_ATTACKED {
-		b.IsCheck = true
+	if b.Squares[kingSq.ToInfoIndex()] != CHECK_NONE {
+		b.CheckType = CHECK_UNKNOWN
 	}
 
 	// Detect pins involving the king.
-	//	kingRank := kingSq.Rank()
-	//	kingFile := kingSq.File()
+	// 1.) rooks
+	for i := uint8(0); i < b.Rooks[oppColor].Size; i++ {
+		rsq := b.Rooks[oppColor].Pieces[i]
+		diff := rsq.Diff(kingSq)
+
+		if SQUARE_DIFFS[diff].Contains(base.ROOK) {
+			// A pin is possible -> step from king to the rook and test for pins.
+
+		}
+	}
+	// 2.) bishops
+	// 3.) queens
 
 	fmt.Println(b.InfoBoardString())
 	//	for _, idx := range base.INFO_BOARD_INDEXES {
@@ -437,7 +471,7 @@ func (b *Board) GenerateKingMoves(mlist *base.MoveList, color base.Color) {
 	move := base.Move{}
 	piece := base.KING | color
 
-	if b.IsCheck {
+	if b.CheckType != CHECK_NONE {
 		// Cannot castle when in check.
 		goto SKIP_ALL_CASTLING
 	}

@@ -65,9 +65,9 @@ const (
 )
 
 const (
-	INFO_NONE Info = iota
-	INFO_ATTACKED
-	INFO_PINNED
+//	INFO_NONE Info = iota
+//	INFO_ATTACKED
+//	INFO_PINNED
 )
 
 var (
@@ -138,8 +138,12 @@ func (p Piece) HasColor(color Color) bool {
 	return (COLOR_TEST_MASK & p) == color
 }
 
-func (p Piece) IsType(piece Piece) bool {
-	return (p & piece) != 0
+//func (p Piece) IsType(piece Piece) bool {
+//	return (p & piece) != 0
+//}
+
+func (p Piece) Contains(pieces Piece) bool {
+	return (p & pieces) == pieces
 }
 
 func (sq Square) IsEmpty() bool {
@@ -175,4 +179,8 @@ func (sq Square) IsPawnPromoting(color Color) bool {
 
 func (sq Square) ToInfoIndex() Square {
 	return sq + 8
+}
+
+func (sq Square) Diff(sq2 Square) Square {
+	return Square(0x77 + (int8(sq) - int8(sq2)))
 }

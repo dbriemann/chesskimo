@@ -2,4 +2,4 @@
 [![GoDoc](https://godoc.org/github.com/dbriemann/chesskimo?status.svg)](https://godoc.org/github.com/dbriemann/chesskimo)
 
 # chesskimo
-Chess engine written in Go
+A chess engine written in Go with 0x88 board representation.
