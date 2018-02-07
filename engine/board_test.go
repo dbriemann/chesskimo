@@ -83,8 +83,8 @@ func TestGenerateKingMoves(t *testing.T) {
 		"r1bqk2r/ppp2ppp/2n2n2/1B1pp3/1b1PP1P1/2N2N2/PPP2P1P/R1BQK2R b KQkq g3 0 6",
 	}
 	results := []string{
-		"[0-0, 0-0-0, Ke1-f1, Ke1-d1, Ke1-e2]",
-		"[0-0, ke8-f8, ke8-e7, ke8-d7]",
+		"[Ke1-f1, Ke1-d1, Ke1-e2, 0-0, 0-0-0]",
+		"[ke8-f8, ke8-e7, ke8-d7, 0-0]",
 	}
 
 	board := NewBoard()

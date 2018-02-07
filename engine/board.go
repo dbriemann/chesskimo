@@ -153,6 +153,7 @@ func NewBoard() Board {
 	b.Knights = [2]base.PieceList{base.NewPieceList()}
 	b.Pawns = [2]base.PieceList{base.NewPieceList()}
 
+	b.CheckInfo = CHECK_NONE
 	b.SetStartingPosition()
 	return b
 }
@@ -227,7 +228,7 @@ func (b *Board) SetFEN(fenstr string) error {
 	}
 
 	// Set info board and find possible checks.
-	//	b.BuilInfoBoard(b.Player)
+	b.DetectChecksAndPins(b.Player)
 
 	return nil
 }
@@ -236,6 +237,71 @@ func (b *Board) clearInfoBoard() {
 	for _, idx := range base.INFO_BOARD_INDEXES {
 		b.Squares[idx] = base.NO_PIECE
 	}
+}
+
+// IsSquareAttacked tests if a specific square is attacked by any enemy.
+func (b *Board) IsSquareAttacked(sq base.Square, color base.Color) bool {
+	oppColor := color.Flip()
+
+	// 0. Detect attacks by kings.
+	oppKingSq := b.Kings[oppColor]
+	diff := oppKingSq.Diff(sq)
+	if SQUARE_DIFFS[diff].Contains(base.KING) {
+		return true
+	}
+
+	// 1. Detect attacks	by knights.
+	for i := uint8(0); i < b.Knights[oppColor].Size; i++ {
+		knightSq := b.Knights[oppColor].Pieces[i]
+		diff = knightSq.Diff(sq)
+		if SQUARE_DIFFS[diff].Contains(base.KNIGHT) {
+			return true
+		}
+	}
+
+	// 2. Detect attacks by pawns.
+	for i := uint8(0); i < b.Pawns[oppColor].Size; i++ {
+		pawnSq := b.Pawns[oppColor].Pieces[i]
+		for _, dir := range base.PAWN_CAPTURE_DIRS[oppColor] {
+			to := base.Square(int8(pawnSq) + dir)
+			if sq == to {
+				return true
+			}
+		}
+	}
+
+	// 3. Detect attacks by sliders.
+	return b.IsSqAttackedBySlider(color, sq, &b.Queens[oppColor], &base.DIAGONAL_DIRS, base.QUEEN) ||
+		b.IsSqAttackedBySlider(color, sq, &b.Queens[oppColor], &base.ORTHOGONAL_DIRS, base.QUEEN) ||
+		b.IsSqAttackedBySlider(color, sq, &b.Bishops[oppColor], &base.DIAGONAL_DIRS, base.BISHOP) ||
+		b.IsSqAttackedBySlider(color, sq, &b.Rooks[oppColor], &base.ORTHOGONAL_DIRS, base.ROOK)
+}
+
+// IsSqAttackedBySlider tests if a specific square is attacked by an enemy slider.
+func (b *Board) IsSqAttackedBySlider(color base.Color, sq base.Square, pieceList *base.PieceList, dirList *[4]int8, ptype base.Piece) bool {
+	for i := uint8(0); i < pieceList.Size; i++ {
+		sliderSq := pieceList.Pieces[i]
+		diff := sq.Diff(sliderSq)
+		if SQUARE_DIFFS[diff].Contains(ptype) {
+			// The slider possibly attacks sq.
+			diffdir := DIFF_DIRS[diff]
+			// Starting from sq we step through the path in question towards the enemy slider.
+			for stepSq := base.Square(int8(sq) + diffdir); ; stepSq = base.Square(int8(stepSq) + diffdir) {
+				curPiece := b.Squares[stepSq]
+				if curPiece.IsEmpty() {
+					continue
+				} else if curPiece.HasColor(color) {
+					// A friendly piece was encountered -> no attack -> next piece.
+					break
+				} else if curPiece.Contains(ptype) {
+					// An attacking enemy was encountered.
+					return true
+				}
+			}
+		}
+	}
+
+	return false
 }
 
 func (b *Board) DetectChecksAndPins(color base.Color) {
@@ -312,12 +378,9 @@ EXIT_PAWN_CHECK:
 	}
 
 PRETTY_PRINT_RETURN:
-	fmt.Println(b.InfoBoardString())
-	//	for _, idx := range base.INFO_BOARD_INDEXES {
-	//		fmt.Print(int(b.Squares[idx]))
-	//	}
-	fmt.Println(b.CheckInfo)
-	fmt.Println()
+	//	fmt.Println(b.InfoBoardString())
+	//	fmt.Println(b.CheckInfo)
+	//	fmt.Println()
 }
 
 func (b *Board) DetectSliderChecksAndPins(color base.Color, ccount int, pieceList *base.PieceList, dirList *[4]int8, ptype base.Piece) int {
@@ -332,7 +395,7 @@ func (b *Board) DetectSliderChecksAndPins(color base.Color, ccount int, pieceLis
 			// The slider possibly checks the king or pins a piece.
 			diffdir := DIFF_DIRS[diff]
 			//			fmt.Println("POSSIBLE PATH DIR:", diffdir)
-			// Starting from the king we step through the diagonal in question towards the enemy slider.
+			// Starting from the king we step through the path in question towards the enemy slider.
 			info := base.INFO_NONE
 			for stepSq := base.Square(int8(kingSq) + diffdir); ; stepSq = base.Square(int8(stepSq) + diffdir) {
 				//				fmt.Println("PATH SQ:", stepSq, base.PrintBoardIndex[stepSq])
@@ -398,6 +461,20 @@ func (b *Board) DetectSliderChecksAndPins(color base.Color, ccount int, pieceLis
 	}
 
 	return checkCounter
+}
+
+func (b *Board) GenerateAllLegalMoves(mlist *base.MoveList, color base.Color) {
+	// Detect checks and pins.
+	b.DetectChecksAndPins(color)
+
+	// Always generate king moves.
+	b.GenerateKingMoves(mlist, color)
+
+	// If there is a double check skip everything else
+	if b.CheckInfo == CHECK_DOUBLE_CHECK {
+		return
+	}
+
 }
 
 // GeneratePawnMoves generates all pseudo legal pawn moves for the given color
@@ -513,7 +590,7 @@ func (b *Board) GenerateKnightMoves(mlist *base.MoveList, color base.Color) {
 	}
 }
 
-// GenerateKingMoves generates all pseudo legal king moves for the given color
+// GenerateKingMoves generates all legal king moves for the given color
 // and stores them in the given MoveList.
 func (b *Board) GenerateKingMoves(mlist *base.MoveList, color base.Color) {
 	from, to := b.Kings[color], base.OTB
@@ -522,60 +599,66 @@ func (b *Board) GenerateKingMoves(mlist *base.MoveList, color base.Color) {
 	move := base.Move{}
 	piece := base.KING | color
 
-	if b.CheckInfo != CHECK_NONE {
-		// Cannot castle when in check.
-		goto SKIP_ALL_CASTLING
-	}
-	// Try castling first.
-	// a. king-side
-	// If castling king-side is still allowed..
-	if b.CastleShort[color] {
-		// test if the squares on short castling path are clear.
-		for _, sq := range base.CASTLING_PATH_SHORT[color] {
-			tpiece = b.Squares[sq]
-			if !tpiece.IsEmpty() {
-				goto SKIP_CASTLING_SHORT
-			}
-		}
-		// All squares on the path are clear -> add castle short move.
-		to = base.CASTLING_PATH_SHORT[color][1]
-		move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_SHORT)
-		mlist.Put(move)
-	}
+	// Define all possible target squares for the king to move to and add all legal normal moves.
+	targets := [8]bool{}
 
-SKIP_CASTLING_SHORT:
-
-	// b. queen-side
-	// If castling queen side is still allowed..
-	if b.CastleLong[color] {
-		// test if the squares on long castling path are clear.
-		for _, sq := range base.CASTLING_PATH_LONG[color] {
-			tpiece = b.Squares[sq]
-			if !tpiece.IsEmpty() {
-				goto SKIP_CASTLING_LONG
-			}
-		}
-		// All squares on the path are clear -> add castle short move.
-		to = base.CASTLING_PATH_LONG[color][1]
-		move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_LONG)
-		mlist.Put(move)
-	}
-
-SKIP_CASTLING_LONG:
-SKIP_ALL_CASTLING:
-
-	// Now add all normal moves.
-	for _, dir := range base.KING_DIRS {
+	for i, dir := range base.KING_DIRS {
 		to = base.Square(int8(from) + dir)
 		if to.OnBoard() {
-			tpiece = b.Squares[to]
-			if tpiece.IsEmpty() {
-				// ADD NORMAL MOVE
-				move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
+			if !b.IsSquareAttacked(to, color) {
+				targets[i] = true
+				tpiece = b.Squares[to]
+				if tpiece.IsEmpty() {
+					// ADD NORMAL MOVE
+					move = base.NewMove(from, to, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
+					mlist.Put(move)
+				} else if tpiece.HasColor(oppColor) {
+					// ADD CAPTURE MOVE
+					move = base.NewMove(from, to, piece, tpiece, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
+					mlist.Put(move)
+				}
+			}
+		}
+	}
+
+	if b.CheckInfo != CHECK_NONE {
+		// Cannot castle when in check.
+		return
+	}
+
+	// a. Try castle king-side
+	// Is it still allowed?
+	if b.CastleShort[color] {
+		sq1 := base.CASTLING_PATH_SHORT[color][0]
+		sq2 := base.CASTLING_PATH_SHORT[color][1]
+
+		// Test if the squares on short castling path are empty.
+		sq1Piece := b.Squares[sq1]
+		sq2Piece := b.Squares[sq2]
+		if sq1Piece.IsEmpty() && sq2Piece.IsEmpty() {
+			// Test if both squares are not attacked.
+			if targets[0] && !b.IsSquareAttacked(sq2, color) {
+				// Finally.. castling king-side is possible.
+				move = base.NewMove(from, sq2, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_SHORT)
 				mlist.Put(move)
-			} else if tpiece.HasColor(oppColor) {
-				// ADD CAPTURE MOVE
-				move = base.NewMove(from, to, piece, tpiece, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
+			}
+		}
+	}
+
+	// b. Try castle queen-side
+	// Is it still allowed?
+	if b.CastleShort[color] {
+		sq1 := base.CASTLING_PATH_LONG[color][0]
+		sq2 := base.CASTLING_PATH_LONG[color][1]
+
+		// Test if the squares on short castling path are empty.
+		sq1Piece := b.Squares[sq1]
+		sq2Piece := b.Squares[sq2]
+		if sq1Piece.IsEmpty() && sq2Piece.IsEmpty() {
+			// Test if both squares are not attacked.
+			if targets[1] && !b.IsSquareAttacked(sq2, color) {
+				// Finally.. castling king-side is possible.
+				move = base.NewMove(from, sq2, piece, base.NO_PIECE, base.NO_PIECE, base.EP_TYPE_NONE, base.CASTLE_TYPE_LONG)
 				mlist.Put(move)
 			}
 		}
