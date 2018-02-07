@@ -28,9 +28,9 @@ type Board struct {
 	Squares     [64 * 2]base.Piece
 	CastleShort [2]bool
 	CastleLong  [2]bool
-	CheckType   uint16
 	MoveNumber  uint16
 	DrawCounter uint16
+	CheckInfo   base.Square
 	EpSquare    base.Square
 	Player      base.Color
 	Kings       [2]base.Square
@@ -42,13 +42,9 @@ type Board struct {
 }
 
 const (
-	CHECK_NONE    = 0
-	CHECK_PAWN    = 1
-	CHECK_KNIGHT  = 2
-	CHECK_BISHOP  = 3
-	CHECK_ROOK    = 4
-	CHECK_QUEEN   = 5
-	CHECK_UNKNOWN = 666 // TODO - just here temporarily
+	CHECK_NONE         = base.OTB
+	CHECK_DOUBLE_CHECK = 0x0F // Is also off the board but used as double check value.
+	CHECK_CHECKMATE    = 0x1F
 )
 
 var (
@@ -93,7 +89,7 @@ func populateDiffMaps() {
 			for _, dir := range base.DIAGONAL_DIRS {
 				for steps := int8(1); ; steps++ {
 					target := base.Square(int8(from) + steps*dir)
-					if !target.IsLegal() {
+					if !target.OnBoard() {
 						// We left the board -> next dir.
 						break
 					}
@@ -113,7 +109,7 @@ func populateDiffMaps() {
 			for _, dir := range base.ORTHOGONAL_DIRS {
 				for steps := int8(1); ; steps++ {
 					target := base.Square(int8(from) + steps*dir)
-					if !target.IsLegal() {
+					if !target.OnBoard() {
 						// We left the board -> next dir.
 						break
 					}
@@ -230,123 +226,178 @@ func (b *Board) SetFEN(fenstr string) error {
 		}
 	}
 
-	// TODO test for checks.
+	// Set info board and find possible checks.
+	//	b.BuilInfoBoard(b.Player)
 
 	return nil
 }
 
 func (b *Board) clearInfoBoard() {
 	for _, idx := range base.INFO_BOARD_INDEXES {
-		b.Squares[idx] = base.OTB
+		b.Squares[idx] = base.NO_PIECE
 	}
 }
 
-//TODO
-//func (b *Board) attackedBy(sq base.Square) base.Square {
-
-//}
-
-// FindAttackedAndPinned searches the board state for all attacked squares and pinned pieces.
-// It then stores the information in the OTB area of the 0x88 board (the right side). The
-// information is then used by the move generation functions to avoid illegal moves (TODO).
-func (b *Board) FindAttackedAndPinned(color base.Color) {
-	oppColor := color.FlipColor()
-	to := base.OTB
-	// Clear old info data.
+func (b *Board) DetectChecksAndPins(color base.Color) {
 	b.clearInfoBoard()
-	b.CheckType = CHECK_NONE
+	oppColor := color.Flip()
 
-	//	 Find all squares attacked by opposing kings.
-	from := b.Kings[oppColor]
-	for _, dir := range base.KING_DIRS {
-		to = base.Square(int8(from) + dir)
-		if to.IsLegal() {
-			b.Squares[to.ToInfoIndex()] = from
-		}
-	}
+	kingSq := b.Kings[color]
+	checkCounter := 0
 
-	//	 Find all squares attacked by opposing pawns.
-	for i := uint8(0); i < b.Pawns[oppColor].Size; i++ {
-		from = b.Pawns[oppColor].Pieces[i]
-		for _, dir := range base.PAWN_CAPTURE_DIRS[oppColor] {
-			to = base.Square(int8(from) + dir)
-			if to.IsLegal() {
-				b.Squares[to.ToInfoIndex()] = from
-			}
-		}
-	}
+	//	fmt.Println("KING:", base.PrintBoardIndex[kingSq])
 
-	//	 Find all squares attacked by opposing knights.
+	// 1. Detect checks by knights.
 	for i := uint8(0); i < b.Knights[oppColor].Size; i++ {
-		from = b.Knights[oppColor].Pieces[i]
-		for _, dir := range base.KNIGHT_DIRS {
-			to = base.Square(int8(from) + dir)
-			if to.IsLegal() {
-				b.Squares[to.ToInfoIndex()] = from
+		knightSq := b.Knights[oppColor].Pieces[i]
+		diff := knightSq.Diff(kingSq)
+		if SQUARE_DIFFS[diff].Contains(base.KNIGHT) {
+			// The knight checks the king. Save the info and break the loop.
+			// There can never be a double check of 2 knights.
+			b.CheckInfo = knightSq
+			checkCounter++
+			b.Squares[knightSq.ToInfoIndex()] = base.INFO_CHECK
+			break
+		}
+	}
+
+	// 2. Detect checks by pawns.
+	for i := uint8(0); i < b.Pawns[oppColor].Size; i++ {
+		pawnSq := b.Pawns[oppColor].Pieces[i]
+		for _, dir := range base.PAWN_CAPTURE_DIRS[oppColor] {
+			to := base.Square(int8(pawnSq) + dir)
+			if kingSq == to {
+				// The pawn checks the king. Save the info and break the loop.
+				// There can never be a double check of 2 pawns.
+				b.CheckInfo = pawnSq
+				checkCounter++
+				b.Squares[pawnSq.ToInfoIndex()] = base.INFO_CHECK
+				goto EXIT_PAWN_CHECK // Acts as double break.. nothing harmful really... :)
 			}
 		}
 	}
 
-	// All sliding operations are done with the same loop, by alternating the piecelist and directions list.
-	// First bishops and queens are tested for diagonal attacks then rooks and queens are tested for orthogonal attacks.
-	piecelist := [4]*base.PieceList{&b.Bishops[oppColor], &b.Queens[oppColor], &b.Rooks[oppColor], &b.Queens[oppColor]}
-	directions := [4]*[4]int8{&base.DIAGONAL_DIRS, &base.DIAGONAL_DIRS, &base.ORTHOGONAL_DIRS, &base.ORTHOGONAL_DIRS}
+EXIT_PAWN_CHECK:
 
-	// Iterate piece lists and corresponding directions.
-	for idx := 0; idx < 4; idx++ {
-		for i := uint8(0); i < piecelist[idx].Size; i++ {
-			from = piecelist[idx].Pieces[i]
-			for _, dir := range directions[idx] {
-				for steps := int8(1); ; steps++ {
-					to = base.Square(int8(from) + dir*steps)
-					if to.IsLegal() {
-						tpiece := b.Squares[to]
-						if tpiece.HasColor(oppColor) {
-							// Blocked by brethren. Still mark as attacked.
-							b.Squares[to.ToInfoIndex()] = from
-							break
-						} else if tpiece.HasColor(color) {
-							// Mark as attacked. If it is a pin it will be detected later.
-							b.Squares[to.ToInfoIndex()] = from
+	// 2.b No double check testing is needed. Pawn and knight cannot give double check.
+
+	// 3. Detect checks (and pins) by Sliders.
+	// 3.a) bishops
+	checkCounter += b.DetectSliderChecksAndPins(color, checkCounter, &b.Bishops[oppColor], &base.DIAGONAL_DIRS, base.BISHOP)
+	if checkCounter > 1 {
+		// Double check detected -> everything else is not of interest now.
+		b.CheckInfo = CHECK_DOUBLE_CHECK
+		goto PRETTY_PRINT_RETURN
+	}
+	// 3.b) queens diagonally
+	checkCounter += b.DetectSliderChecksAndPins(color, checkCounter, &b.Queens[oppColor], &base.DIAGONAL_DIRS, base.QUEEN)
+	if checkCounter > 1 {
+		// Double check detected -> everything else is not of interest now.
+		b.CheckInfo = CHECK_DOUBLE_CHECK
+		goto PRETTY_PRINT_RETURN
+	}
+	// 3.c) rooks
+	checkCounter += b.DetectSliderChecksAndPins(color, checkCounter, &b.Rooks[oppColor], &base.ORTHOGONAL_DIRS, base.ROOK)
+	if checkCounter > 1 {
+		// Double check detected -> everything else is not of interest now.
+		b.CheckInfo = CHECK_DOUBLE_CHECK
+		goto PRETTY_PRINT_RETURN
+	}
+	// 3.d) queens orthogonally
+	checkCounter += b.DetectSliderChecksAndPins(color, checkCounter, &b.Queens[oppColor], &base.ORTHOGONAL_DIRS, base.ROOK)
+	if checkCounter > 1 {
+		// Double check detected -> everything else is not of interest now.
+		b.CheckInfo = CHECK_DOUBLE_CHECK
+		goto PRETTY_PRINT_RETURN
+	}
+
+PRETTY_PRINT_RETURN:
+	fmt.Println(b.InfoBoardString())
+	//	for _, idx := range base.INFO_BOARD_INDEXES {
+	//		fmt.Print(int(b.Squares[idx]))
+	//	}
+	fmt.Println(b.CheckInfo)
+	fmt.Println()
+}
+
+func (b *Board) DetectSliderChecksAndPins(color base.Color, ccount int, pieceList *base.PieceList, dirList *[4]int8, ptype base.Piece) int {
+	kingSq := b.Kings[color]
+	checkCounter := 0
+
+	for i := uint8(0); i < pieceList.Size; i++ {
+		sliderSq := pieceList.Pieces[i]
+		//		fmt.Println("SLIDER", base.PrintBoardIndex[sliderSq])
+		diff := kingSq.Diff(sliderSq)
+		if SQUARE_DIFFS[diff].Contains(ptype) {
+			// The slider possibly checks the king or pins a piece.
+			diffdir := DIFF_DIRS[diff]
+			//			fmt.Println("POSSIBLE PATH DIR:", diffdir)
+			// Starting from the king we step through the diagonal in question towards the enemy slider.
+			info := base.INFO_NONE
+			for stepSq := base.Square(int8(kingSq) + diffdir); ; stepSq = base.Square(int8(stepSq) + diffdir) {
+				//				fmt.Println("PATH SQ:", stepSq, base.PrintBoardIndex[stepSq])
+				curPiece := b.Squares[stepSq]
+				if curPiece.IsEmpty() {
+					//					fmt.Println("EMTPY -> CONTINUE")
+					continue
+				} else if curPiece.HasColor(color) {
+					// A friendly piece was encountered
+					if info == base.INFO_NONE {
+						//						fmt.Println("FRIENDLY -> SET ATTACKED")
+						// This is the first piece on the path -> mark it as attacked.
+						info = base.INFO_ATTACKED
+					} else {
+						//						fmt.Println("FRIENDLY -> REMOVE ATTACK")
+						// We already marked a piece on this path before -> there cannot be a pin anymore.
+						// (There is an exception for EP capture but those are handled elsewhere.
+						info = base.INFO_NONE
+						break // Nothing more to do on this path.
+					}
+				} else {
+					// An enemy piece was encountered
+					if curPiece.Contains(ptype) {
+						//						fmt.Println("ENEMY -> SLIDER")
+						// We reached the checker/pinner -> decide.
+						if info == base.INFO_NONE {
+							//							fmt.Println("CHECK")
+							// It's a check!
+							checkCounter++
+							b.CheckInfo = sliderSq
+							info = base.INFO_CHECK
 							break
 						} else {
-							// Empty field is just marked as attacked.
-							b.Squares[to.ToInfoIndex()] = from
+							//							fmt.Println("PIN")
+							// It's a pinner!
+							info = base.INFO_PIN
+							break
 						}
 					} else {
+						//						fmt.Println("ENEMY -> OTHER PIECE")
+						// The enemy piece cannot pin or check. Break out.
+						info = base.INFO_NONE
 						break
 					}
 				}
 			}
 
+			if info == base.INFO_PIN || info == base.INFO_CHECK {
+				// We have detected a path that pins or checks. It will now
+				// be marked in the info board, so move generation will skip
+				// illegal moves.
+				b.Squares[sliderSq.ToInfoIndex()] = info
+				for stepSq := base.Square(int8(kingSq) + diffdir); stepSq != sliderSq; stepSq = base.Square(int8(stepSq) + diffdir) {
+					b.Squares[stepSq.ToInfoIndex()] = info
+				}
+			}
+
+			if checkCounter+ccount > 1 {
+				// Double check detected. Leave early.
+				return checkCounter
+			}
 		}
 	}
 
-	// Detect check.
-	kingSq := b.Kings[color]
-	if b.Squares[kingSq.ToInfoIndex()] != CHECK_NONE {
-		b.CheckType = CHECK_UNKNOWN
-	}
-
-	// Detect pins involving the king.
-	// 1.) rooks
-	for i := uint8(0); i < b.Rooks[oppColor].Size; i++ {
-		rsq := b.Rooks[oppColor].Pieces[i]
-		diff := rsq.Diff(kingSq)
-
-		if SQUARE_DIFFS[diff].Contains(base.ROOK) {
-			// A pin is possible -> step from king to the rook and test for pins.
-
-		}
-	}
-	// 2.) bishops
-	// 3.) queens
-
-	fmt.Println(b.InfoBoardString())
-	//	for _, idx := range base.INFO_BOARD_INDEXES {
-	//		fmt.Print(int(b.Squares[idx]))
-	//	}
-	fmt.Println()
+	return checkCounter
 }
 
 // GeneratePawnMoves generates all pseudo legal pawn moves for the given color
@@ -354,7 +405,7 @@ func (b *Board) FindAttackedAndPinned(color base.Color) {
 func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 	from, to := base.OTB, base.OTB
 	tpiece := base.NO_PIECE
-	oppColor := color.FlipColor()
+	oppColor := color.Flip()
 	move := base.Move{}
 	piece := base.PAWN | color
 
@@ -369,14 +420,14 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 		// because casting it back to uint8 will correct the result.
 		to = base.Square(int8(from) + base.PAWN_CAPTURE_DIRS[oppColor][0])
 		tpiece = b.Squares[to]
-		if to.IsLegal() && tpiece.HasColor(color) {
+		if to.OnBoard() && tpiece.HasColor(color) {
 			move = base.NewMove(to, from, piece, base.PAWN|oppColor, base.NO_PIECE, base.EP_TYPE_CAPTURE, base.CASTLE_TYPE_NONE)
 			mlist.Put(move)
 		}
 
 		to = base.Square(int8(from) + base.PAWN_CAPTURE_DIRS[oppColor][1])
 		tpiece = b.Squares[to]
-		if to.IsLegal() && tpiece.HasColor(color) {
+		if to.OnBoard() && tpiece.HasColor(color) {
 			move = base.NewMove(to, from, piece, base.PAWN|oppColor, base.NO_PIECE, base.EP_TYPE_CAPTURE, base.CASTLE_TYPE_NONE)
 			mlist.Put(move)
 		}
@@ -392,7 +443,7 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 			tpiece = b.Squares[to]
 			// If the target square is on board and has the opponent's color
 			// the capture is possible.
-			if to.IsLegal() && tpiece.HasColor(oppColor) {
+			if to.OnBoard() && tpiece.HasColor(oppColor) {
 				// We also have to check if the capture is also a promotion.
 				if to.IsPawnPromoting(color) {
 					for prom := base.QUEEN; prom >= base.KNIGHT; prom >>= 1 {
@@ -436,7 +487,7 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 func (b *Board) GenerateKnightMoves(mlist *base.MoveList, color base.Color) {
 	from, to := base.OTB, base.OTB
 	tpiece := base.NO_PIECE
-	oppColor := color.FlipColor()
+	oppColor := color.Flip()
 	move := base.Move{}
 	piece := base.KNIGHT | color
 
@@ -446,7 +497,7 @@ func (b *Board) GenerateKnightMoves(mlist *base.MoveList, color base.Color) {
 		// Try all possible directions for a knight.
 		for _, dir := range base.KNIGHT_DIRS {
 			to = base.Square(int8(from) + dir)
-			if to.IsLegal() {
+			if to.OnBoard() {
 				tpiece = b.Squares[to]
 				if tpiece.IsEmpty() {
 					// Add a normal move.
@@ -467,11 +518,11 @@ func (b *Board) GenerateKnightMoves(mlist *base.MoveList, color base.Color) {
 func (b *Board) GenerateKingMoves(mlist *base.MoveList, color base.Color) {
 	from, to := b.Kings[color], base.OTB
 	tpiece := base.NO_PIECE
-	oppColor := color.FlipColor()
+	oppColor := color.Flip()
 	move := base.Move{}
 	piece := base.KING | color
 
-	if b.CheckType != CHECK_NONE {
+	if b.CheckInfo != CHECK_NONE {
 		// Cannot castle when in check.
 		goto SKIP_ALL_CASTLING
 	}
@@ -516,7 +567,7 @@ SKIP_ALL_CASTLING:
 	// Now add all normal moves.
 	for _, dir := range base.KING_DIRS {
 		to = base.Square(int8(from) + dir)
-		if to.IsLegal() {
+		if to.OnBoard() {
 			tpiece = b.Squares[to]
 			if tpiece.IsEmpty() {
 				// ADD NORMAL MOVE
@@ -569,7 +620,7 @@ func (b *Board) GenerateSlidingMoves(mlist *base.MoveList, color base.Color, pty
 
 			for steps := int8(1); ; steps++ {
 				to = base.Square(int8(from) + dir*steps)
-				if !to.IsLegal() {
+				if !to.OnBoard() {
 					// Target is an illegal square -> next direction.
 					break
 				} else {
@@ -605,7 +656,8 @@ func (b *Board) InfoBoardString() string {
 		str += strconv.Itoa(r+1) + " | "
 		for f := 0; f < 8; f++ {
 			idx := 16*r + f + 8
-			str += strconv.Itoa(int(b.Squares[idx])) + " "
+			str += fmt.Sprintf("%d ", b.Squares[idx])
+			//			str += strconv.Itoa(int(b.Squares[idx])) + " "
 			if f == 7 {
 				str += "|\n"
 			}

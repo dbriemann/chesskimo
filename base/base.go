@@ -65,9 +65,10 @@ const (
 )
 
 const (
-//	INFO_NONE Info = iota
-//	INFO_ATTACKED
-//	INFO_PINNED
+	INFO_NONE Info = iota
+	INFO_ATTACKED
+	INFO_PIN
+	INFO_CHECK
 )
 
 var (
@@ -125,7 +126,7 @@ var (
 	}
 )
 
-func (c Color) FlipColor() Color {
+func (c Color) Flip() Color {
 	// c MUST BE 0 or 1
 	return c ^ 1
 }
@@ -150,7 +151,7 @@ func (sq Square) IsEmpty() bool {
 	return sq == EMPTY
 }
 
-func (sq Square) IsLegal() bool {
+func (sq Square) OnBoard() bool {
 	return (sq & 0x88) == 0
 }
 

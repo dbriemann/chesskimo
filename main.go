@@ -18,8 +18,10 @@ func main() {
 		//		"r3k2r/pppq1ppp/2npbn2/2b1p3/2B1P3/2NPBN2/PPPQ1PPP/R3K2R w KQkq - 4 8",
 		//		"8/5k2/2p5/2R5/2p1b3/2K5/1r2R3/1R3n2 w - - 0 1",
 		//		"7k/1QQr4/1nrp4/2Qp4/Qn2pp2/3Q1p2/1K4p1/3qQ3 w - - 0 1",
-		"r1bqk2r/pppp1pp1/2n2n1p/1B2p3/1b2P3/2NP1N2/PPP2PPP/R1BQK2R w KQkq - 2 6", // PIN
+		//		"r1bqk2r/pppp1pp1/2n2n1p/1B2p3/1b2P3/2NP1N2/PPP2PPP/R1BQK2R w KQkq - 2 6", // PIN
 		//		"rnb1kb1r/ppppn1pp/4p3/2K1Ppq1/8/8/PPPP1PPP/RNBQ1BNR w kq f6 0 7", // EP PIN - CRAZY STUFF
+		//		"1k2r3/1pp5/7b/2q5/3PNB2/qr1PKB1r/8/6q1 w - - 0 1", // lots of pins + check
+		"1k2r3/1pp5/7b/2q5/3PNBn1/qr1PKB1r/8/6q1 w - - 0 1", // lots of pins + double check
 	}
 
 	b := engine.NewBoard()
@@ -29,7 +31,7 @@ func main() {
 		b.SetFEN(fen)
 		fmt.Println(&b)
 		mlist.Clear()
-		b.FindAttackedAndPinned(b.Player)
+		b.DetectChecksAndPins(b.Player)
 
 		//		b.GenerateKingMoves(&mlist, b.Player)
 		//		b.GenerateQueenMoves(&mlist, b.Player)
