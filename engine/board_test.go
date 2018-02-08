@@ -180,7 +180,7 @@ func TestGenerateKnightMoves(t *testing.T) {
 	}
 	results := []string{
 		"[Nb1-a3, Nb1-c3, Ng1-f3, Ng1-h3]",
-		"[nc6-b8, nc6xPd4, nc6-a5, nc6-e7, nf6-g8, nf6xPe4, nf6xPg4, nf6-d7, nf6-h5]",
+		"[nf6-g8, nf6xPe4, nf6xPg4, nf6-d7, nf6-h5]",
 	}
 
 	board := NewBoard()

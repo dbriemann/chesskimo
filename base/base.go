@@ -66,9 +66,9 @@ const (
 
 const (
 	INFO_NONE Info = iota
+	INFO_CHECK
 	INFO_ATTACKED
 	INFO_PIN
-	INFO_CHECK
 )
 
 var (
