@@ -11,24 +11,24 @@ const (
 )
 
 type Move struct {
-	From          Square
-	To            Square
-	PieceType     Piece
-	CaptureType   Piece
-	PromotionType Piece
-	EpType        uint8
-	CastleType    uint8
+	From           Square
+	To             Square
+	Piece          Piece
+	CapturedPiece  Piece
+	PromotionPiece Piece
+	EpType         uint8
+	CastleType     uint8
 }
 
-func NewMove(from, to Square, ptype, captype, promtype Piece, eptype, castletype uint8) Move {
+func NewMove(from, to Square, piece, cappiece, prompiece Piece, eptype, castletype uint8) Move {
 	return Move{
-		From:          from,
-		To:            to,
-		PieceType:     ptype,
-		CaptureType:   captype,
-		PromotionType: promtype,
-		EpType:        eptype,
-		CastleType:    castletype,
+		From:           from,
+		To:             to,
+		Piece:          piece,
+		CapturedPiece:  cappiece,
+		PromotionPiece: prompiece,
+		EpType:         eptype,
+		CastleType:     castletype,
 	}
 }
 
@@ -43,13 +43,13 @@ func (m *Move) String() string {
 	}
 	str := ""
 	//	if !m.PieceType.IsType(PAWN) {
-	str += PrintMap[m.PieceType]
+	str += PrintMap[m.Piece]
 	//	}
 	str += PrintBoardIndex[m.From]
-	if m.CaptureType != EMPTY {
+	if m.CapturedPiece != EMPTY {
 		str += "x"
 		//		if !m.CaptureType.IsType(PAWN) {
-		str += PrintMap[m.CaptureType]
+		str += PrintMap[m.CapturedPiece]
 		//		}
 	} else {
 		str += "-"
@@ -57,8 +57,8 @@ func (m *Move) String() string {
 	str += PrintBoardIndex[m.To]
 	if m.EpType == EP_TYPE_CAPTURE {
 		str += " e.p."
-	} else if m.PromotionType != EMPTY {
-		str += "=" + PrintMap[m.PromotionType]
+	} else if m.PromotionPiece != EMPTY {
+		str += "=" + PrintMap[m.PromotionPiece]
 	}
 	return str
 }

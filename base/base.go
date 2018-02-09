@@ -83,7 +83,9 @@ var (
 	ORTHOGONAL_DIRS     = [4]int8{LEFT, UP, RIGHT, DOWN}
 	KING_DIRS           = [8]int8{RIGHT, LEFT, UP, DOWN, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT}
 	CASTLING_PATH_SHORT = [2][2]Square{{0x75, 0x76}, {0x5, 0x6}}
-	CASTLING_PATH_LONG  = [2][3]Square{{0x73, 0x72, 0x71}, {0x1, 0x2, 0x3}}
+	CASTLING_PATH_LONG  = [2][3]Square{{0x73, 0x72, 0x71}, {0x3, 0x2, 0x1}}
+	CASTLING_ROOK_SHORT = [2]Square{0x77, 0x07}
+	CASTLING_ROOK_LONG  = [2]Square{0x70, 0x00}
 
 	INFO_BOARD_INDEXES = [64]Square{
 		0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,

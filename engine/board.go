@@ -242,16 +242,85 @@ func (b *Board) clearInfoBoard() {
 // MakeLegalMove expects a legal move and applies it to the board.
 func (b *Board) MakeLegalMove(m base.Move) {
 	// Remove the color from piece.
-	ptype := m.PieceType & base.PIECE_MASK
+	ptype := m.Piece & base.PIECE_MASK
+
+	// Remove piece from board state if it is a capture.
+	if m.CapturedPiece != base.EMPTY {
+		capSq := m.To
+		if m.EpType == base.EP_TYPE_CAPTURE {
+			oppColor := b.Player.Flip()
+			// Find square where captured pawn is.
+			capSq = base.Square(int8(m.To) + base.PAWN_PUSH_DIRS[oppColor])
+		}
+
+		b.removePiece(capSq)
+	}
+
+	// Now make the actual move on the board.
+	b.Squares[m.To], b.Squares[m.From] = b.Squares[m.From], base.EMPTY
+	// Remove any possible e.p. squares.
+	b.EpSquare = base.OTB
+
+	// Make move in piece list and do special move things.
 	switch ptype {
 	case base.PAWN:
+		b.Pawns[b.Player].Move(m.From, m.To)
+		if m.EpType == base.EP_TYPE_CREATE {
+			b.EpSquare = base.Square(int8(m.From) + base.PAWN_PUSH_DIRS[b.Player])
+		}
 	case base.KNIGHT:
+		b.Knights[b.Player].Move(m.From, m.To)
 	case base.BISHOP:
+		b.Bishops[b.Player].Move(m.From, m.To)
 	case base.ROOK:
+		if m.From == base.CASTLING_ROOK_SHORT[b.Player] {
+			b.CastleShort[b.Player] = false
+		} else if m.From == base.CASTLING_ROOK_LONG[b.Player] {
+			b.CastleLong[b.Player] = false
+		}
+		b.Rooks[b.Player].Move(m.From, m.To)
 	case base.QUEEN:
+		b.Queens[b.Player].Move(m.From, m.To)
 	case base.KING:
+		b.Kings[b.Player] = m.To
+		b.CastleShort[b.Player] = false
+		b.CastleLong[b.Player] = false
+		// The rook must be magically moved.
+		if m.CastleType == base.CASTLE_TYPE_SHORT {
+			b.Squares[base.CASTLING_PATH_SHORT[b.Player][0]], b.Squares[base.CASTLING_ROOK_SHORT[b.Player]] = base.ROOK|b.Player, base.EMPTY
+		} else if m.CastleType == base.CASTLE_TYPE_LONG {
+			b.Squares[base.CASTLING_PATH_LONG[b.Player][0]], b.Squares[base.CASTLING_ROOK_LONG[b.Player]] = base.ROOK|b.Player, base.EMPTY
+		}
 	default:
 		// This should not happen..
+		panic("Board.MakeLegalMove: " + fmt.Sprintf("%v", m))
+	}
+
+	b.Player = b.Player.Flip()
+	b.MoveNumber++
+	// TODO half draw counter
+}
+
+func (b *Board) removePiece(sq base.Square) {
+	piece := b.Squares[sq]
+	ptype := piece & base.PIECE_MASK
+	color := piece.PieceColor()
+
+	b.Squares[sq] = base.EMPTY
+	switch ptype {
+	case base.PAWN:
+		b.Pawns[color].Remove(sq)
+	case base.KNIGHT:
+		b.Knights[color].Remove(sq)
+	case base.BISHOP:
+		b.Bishops[color].Remove(sq)
+	case base.ROOK:
+		b.Rooks[color].Remove(sq)
+	case base.QUEEN:
+		b.Queens[color].Remove(sq)
+	default:
+		// This should not happen..
+		panic("Board.removePiece: " + fmt.Sprintf("%s %s", base.PrintBoardIndex[sq], base.PrintMap[piece]))
 	}
 }
 

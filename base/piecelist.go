@@ -22,6 +22,14 @@ func (p *PieceList) Add(sq Square) {
 	p.Size++
 }
 
+func (p *PieceList) Move(from, to Square) {
+	for i := uint8(0); i < p.Size; i++ {
+		if p.Pieces[i] == from {
+			p.Pieces[i] = to
+		}
+	}
+}
+
 func (p *PieceList) Remove(sq Square) {
 	for i := uint8(0); i < p.Size; i++ {
 		if p.Pieces[i] == sq {
