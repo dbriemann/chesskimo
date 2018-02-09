@@ -9,7 +9,7 @@ type Info = Piece
 
 const (
 	// Various
-	NONE uint8 = 0
+	NONE Piece = 0
 	// OTB is off the board and used as a non-index in piece lists.
 	OTB Square = 0x7F
 
@@ -25,7 +25,7 @@ const (
 
 	// Pieces:
 	// TODO: should NO_PIECE equal EMPTY??
-	NO_PIECE     Piece = 0   // For special usage only
+	//	NO_PIECE     Piece = 0   // For special usage only
 	EMPTY        Piece = 128 // 10000000
 	PAWN         Piece = 2   // 00000010
 	KNIGHT       Piece = 4   // 00000100

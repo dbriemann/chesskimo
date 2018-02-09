@@ -29,8 +29,8 @@ func TestSquareDiffs(t *testing.T) {
 		set{0x74, 0x65, base.KING | base.QUEEN | base.BISHOP}, // one step diagonal (king test)
 		set{0x4, 0x5, base.KING | base.QUEEN | base.ROOK},     // one step orthogonal (king test)
 		// impossible moves
-		set{0x0, 0x71, base.NO_PIECE},
-		set{0x5, 0x36, base.NO_PIECE},
+		set{0x0, 0x71, base.NONE},
+		set{0x5, 0x36, base.NONE},
 	}
 
 	for i, ts := range testset {
@@ -42,7 +42,7 @@ func TestSquareDiffs(t *testing.T) {
 	}
 }
 
-func TestDiffDirss(t *testing.T) {
+func TestDiffDirs(t *testing.T) {
 	type set struct {
 		From base.Square
 		To   base.Square
@@ -177,10 +177,12 @@ func TestGenerateKnightMoves(t *testing.T) {
 	fens := []string{
 		"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
 		"r1bqk2r/ppp2ppp/2n2n2/1B1pp3/1b1PP1P1/2N2N2/PPP2P1P/R1BQK2R b KQkq g3 0 6",
+		"r1bqk2r/pppp1pp1/2n2n1p/1B2p3/1b2P3/2NP1N2/PPP2PPP/R1BQK2R w KQkq - 2 6",
 	}
 	results := []string{
 		"[Nb1-a3, Nb1-c3, Ng1-f3, Ng1-h3]",
 		"[nf6-g8, nf6xPe4, nf6xPg4, nf6-d7, nf6-h5]",
+		"[Nf3xpe5, Nf3-g5, Nf3-g1, Nf3-d4, Nf3-d2, Nf3-h4]",
 	}
 
 	board := NewBoard()
@@ -204,6 +206,7 @@ func TestGeneratePawnMoves(t *testing.T) {
 		"r2qkbnr/pp2p1Pp/1np1b3/3pPp2/3P4/8/PPP2PP1/RNBQKBNR w KQkq f6 0 8",
 		"r2qkb1r/pp2p1Pp/1np1bn2/3p4/3P4/8/PPP2PP1/RNBQKBNR w KQkq - 0 9",
 		"r2qkbnr/pp2p1Pp/1np1b3/4P3/1PpP1P2/8/P6p/RNBQKBN1 b Qkq b3 0 12",
+		"rnb1kb1r/ppppn1pp/4p3/2K1Ppq1/8/8/PPPP1PPP/RNBQ1BNR w kq f6 0 7",
 	}
 	results := []string{
 		"[Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pd2-d3, Pd2-d4, Pe2-e3, Pe2-e4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Ph2-h3, Ph2-h4]",
@@ -211,6 +214,7 @@ func TestGeneratePawnMoves(t *testing.T) {
 		"[Pe5xpf6 e.p., Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Pg7xbf8=Q, Pg7xbf8=R, Pg7xbf8=B, Pg7xbf8=N, Pg7xrh8=Q, Pg7xrh8=R, Pg7xrh8=B, Pg7xrh8=N]",
 		"[Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Pg7xbf8=Q, Pg7xbf8=R, Pg7xbf8=B, Pg7xbf8=N, Pg7xrh8=Q, Pg7xrh8=R, Pg7xrh8=B, Pg7xrh8=N, Pg7-g8=Q, Pg7-g8=R, Pg7-g8=B, Pg7-g8=N]",
 		"[pc4xPb3 e.p., ph2xNg1=q, ph2xNg1=r, ph2xNg1=b, ph2xNg1=n, ph2-h1=q, ph2-h1=r, ph2-h1=b, ph2-h1=n, pc4-c3, pc6-c5, pa7-a6, pa7-a5, pb7-b5, ph7-h6, ph7-h5]",
+		"[Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pd2-d3, Pd2-d4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Ph2-h3, Ph2-h4]",
 	}
 
 	board := NewBoard()

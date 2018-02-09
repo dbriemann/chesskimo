@@ -46,7 +46,7 @@ func (m *Move) String() string {
 	str += PrintMap[m.PieceType]
 	//	}
 	str += PrintBoardIndex[m.From]
-	if m.CaptureType != NO_PIECE {
+	if m.CaptureType != EMPTY {
 		str += "x"
 		//		if !m.CaptureType.IsType(PAWN) {
 		str += PrintMap[m.CaptureType]
@@ -57,7 +57,7 @@ func (m *Move) String() string {
 	str += PrintBoardIndex[m.To]
 	if m.EpType == EP_TYPE_CAPTURE {
 		str += " e.p."
-	} else if m.PromotionType != NO_PIECE {
+	} else if m.PromotionType != EMPTY {
 		str += "=" + PrintMap[m.PromotionType]
 	}
 	return str
