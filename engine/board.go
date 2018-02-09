@@ -234,6 +234,7 @@ func (b *Board) SetFEN(fenstr string) error {
 }
 
 func (b *Board) clearInfoBoard() {
+	b.CheckInfo = CHECK_NONE
 	for _, idx := range base.INFO_BOARD_INDEXES {
 		b.Squares[idx] = base.INFO_NONE
 	}
@@ -264,9 +265,14 @@ func (b *Board) MakeLegalMove(m base.Move) {
 	// Make move in piece list and do special move things.
 	switch ptype {
 	case base.PAWN:
-		b.Pawns[b.Player].Move(m.From, m.To)
 		if m.EpType == base.EP_TYPE_CREATE {
 			b.EpSquare = base.Square(int8(m.From) + base.PAWN_PUSH_DIRS[b.Player])
+		}
+		if m.PromotionPiece != base.EMPTY {
+			b.Pawns[b.Player].Remove(m.From)
+			b.addPiece(m.To, m.PromotionPiece)
+		} else {
+			b.Pawns[b.Player].Move(m.From, m.To)
 		}
 	case base.KNIGHT:
 		b.Knights[b.Player].Move(m.From, m.To)
@@ -299,6 +305,28 @@ func (b *Board) MakeLegalMove(m base.Move) {
 	b.Player = b.Player.Flip()
 	b.MoveNumber++
 	// TODO half draw counter
+}
+
+func (b *Board) addPiece(sq base.Square, piece base.Piece) {
+	b.Squares[sq] = piece
+	ptype := piece & base.PIECE_MASK
+	color := piece.PieceColor()
+
+	switch ptype {
+	case base.PAWN:
+		b.Pawns[color].Add(sq)
+	case base.KNIGHT:
+		b.Knights[color].Add(sq)
+	case base.BISHOP:
+		b.Bishops[color].Add(sq)
+	case base.ROOK:
+		b.Rooks[color].Add(sq)
+	case base.QUEEN:
+		b.Queens[color].Add(sq)
+	default:
+		// This should not happen..
+		panic("Board.addPiece: " + fmt.Sprintf("%s %s", base.PrintBoardIndex[sq], base.PrintMap[piece]))
+	}
 }
 
 func (b *Board) removePiece(sq base.Square) {
@@ -554,6 +582,18 @@ func (b *Board) DetectSliderChecksAndPins(color base.Color, pmarker *base.Info, 
 				for stepSq := base.Square(int8(kingSq) + diffdir); stepSq != sliderSq; stepSq = base.Square(int8(stepSq) + diffdir) {
 					b.Squares[stepSq.ToInfoIndex()] = info
 				}
+				// If it is a check we need to mark the square
+				// which lies behind the king on the check-path
+				// if it is not blocked by a friendly creature (could overwrite pin info).
+				if info == base.INFO_CHECK {
+					stepSq := base.Square(int8(kingSq) - diffdir)
+					if stepSq.OnBoard() {
+						tpiece := b.Squares[stepSq]
+						if !tpiece.HasColor(color) {
+							b.Squares[stepSq.ToInfoIndex()] = base.INFO_FORBIDDEN_ESCAPE
+						}
+					}
+				}
 			}
 
 			if checkCounter+ccount > 1 {
@@ -623,26 +663,33 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 		from = b.Pawns[color].Pieces[i]
 
 		// a. Captures
+		//		fmt.Println("CAPTURE")
 		for _, capdir := range base.PAWN_CAPTURE_DIRS[color] {
 			to = base.Square(int8(from) + capdir)
-			tpiece = b.Squares[to]
+			//			fmt.Println(base.PrintBoardIndex[from], to)
+			//			fmt.Println(b)
 			// If the target square is on board and has the opponent's color
 			// the capture is possible.
-			if to.OnBoard() && tpiece.HasColor(oppColor) {
-				// We also have to check if the capture is also a promotion.
-				if to.IsPawnPromoting(color) {
-					// If one type of promotion is legal, all are.
-					move, legal = b.newPawnMoveIfLegal(color, from, to, piece, tpiece, base.QUEEN|color, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
-					if legal {
-						for prom := base.QUEEN; prom >= base.KNIGHT; prom >>= 1 {
-							move = base.NewMove(from, to, piece, tpiece, prom|color, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
+			if to.OnBoard() {
+				tpiece = b.Squares[to]
+				if tpiece.HasColor(oppColor) {
+					//					fmt.Println("PIECE", tpiece, oppColor)
+					// We also have to check if the capture is also a promotion.
+					if to.IsPawnPromoting(color) {
+						// If one type of promotion is legal, all are.
+						legal = b.isPawnMoveLegal(from, to, to, tpiece, color)
+						//					move, legal = b.newPawnMoveIfLegal(color, from, to, piece, tpiece, base.QUEEN|color, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
+						if legal {
+							for prom := base.QUEEN; prom >= base.KNIGHT; prom >>= 1 {
+								move = base.NewMove(from, to, piece, tpiece, prom|color, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
+								mlist.Put(move)
+							}
+						}
+					} else {
+						move, legal = b.newPawnMoveIfLegal(color, from, to, piece, tpiece, base.EMPTY, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
+						if legal {
 							mlist.Put(move)
 						}
-					}
-				} else {
-					move, legal = b.newPawnMoveIfLegal(color, from, to, piece, tpiece, base.EMPTY, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
-					if legal {
-						mlist.Put(move)
 					}
 				}
 			}
@@ -650,11 +697,15 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 
 		// b. Push by one.
 		// Target square does never need legality check here.
+		//		fmt.Println("PUSH BY ONE")
 		to = base.Square(int8(from) + base.PAWN_PUSH_DIRS[color])
+		//		fmt.Println(base.PrintBoardIndex[from], to)
+		//		fmt.Println(b)
 		if b.Squares[to].IsEmpty() {
 			if to.IsPawnPromoting(color) {
 				// If one type of promotion is legal, all are.
-				move, legal = b.newPawnMoveIfLegal(color, from, to, piece, base.EMPTY, base.QUEEN|color, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
+				legal = b.isPawnMoveLegal(from, to, to, base.EMPTY, color)
+				//				move, legal = b.newPawnMoveIfLegal(color, from, to, piece, base.EMPTY, base.QUEEN|color, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
 				if legal {
 					for prom := base.QUEEN; prom >= base.KNIGHT; prom >>= 1 {
 						move = base.NewMove(from, to, piece, base.EMPTY, prom|color, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
@@ -668,14 +719,15 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 					mlist.Put(move)
 				}
 			}
-		}
-		// c. Double push by advancing one more time, if the pawn was at base rank.
-		if from.IsPawnBaseRank(color) {
-			to = base.Square(int8(to) + base.PAWN_PUSH_DIRS[color])
-			if b.Squares[to].IsEmpty() {
-				move, legal = b.newPawnMoveIfLegal(color, from, to, piece, base.EMPTY, base.EMPTY, base.EP_TYPE_CREATE, base.CASTLE_TYPE_NONE)
-				if legal {
-					mlist.Put(move)
+
+			// c. Double push by advancing one more time, if the pawn was at base rank.
+			if from.IsPawnBaseRank(color) {
+				to = base.Square(int8(to) + base.PAWN_PUSH_DIRS[color])
+				if b.Squares[to].IsEmpty() {
+					move, legal = b.newPawnMoveIfLegal(color, from, to, piece, base.EMPTY, base.EMPTY, base.EP_TYPE_CREATE, base.CASTLE_TYPE_NONE)
+					if legal {
+						mlist.Put(move)
+					}
 				}
 			}
 		}
@@ -702,7 +754,12 @@ func (b *Board) newPawnMoveIfLegal(color base.Color, from, to base.Square, ptype
 func (b *Board) isPawnMoveLegal(from, to, capSq base.Square, capPiece base.Piece, color base.Color) bool {
 	// Make the pawn move on the board but ignore possible promotions.
 	b.Squares[capSq] = base.EMPTY
+	//	if promPiece == base.EMPTY {
 	b.Squares[to] = b.Squares[from] // Pawn is moved.
+	//	} else {
+	//		b.addPiece(to, promPiece) // Pawn is promoted
+	//	}
+
 	b.Squares[from] = base.EMPTY
 
 	// After the move test for check.
@@ -712,7 +769,12 @@ func (b *Board) isPawnMoveLegal(from, to, capSq base.Square, capPiece base.Piece
 	}
 
 	// Undo the fake move.
-	b.Squares[from] = b.Squares[to] // Move back the pawn to where it came from.
+	//	if promPiece != base.EMPTY {
+	//		// Reverse promotion
+	//		b.removePiece(to)
+	//	}
+	b.Squares[from] = base.PAWN | color // Move back the pawn to where it came from.
+
 	if capSq != to {
 		b.Squares[capSq] = capPiece
 		b.Squares[to] = base.EMPTY
@@ -780,9 +842,12 @@ func (b *Board) GenerateKingMoves(mlist *base.MoveList, color base.Color) {
 	for i, dir := range base.KING_DIRS {
 		to = base.Square(int8(from) + dir)
 		if to.OnBoard() {
-			if !b.IsSquareAttacked(to, base.OTB, color) {
-				targets[i] = true
-				tpiece = b.Squares[to]
+			if b.IsSquareAttacked(to, base.OTB, color) {
+				continue
+			}
+			targets[i] = true
+			tpiece = b.Squares[to]
+			if b.Squares[to.ToInfoIndex()] != base.INFO_FORBIDDEN_ESCAPE {
 				if tpiece.IsEmpty() {
 					// ADD NORMAL MOVE
 					move = base.NewMove(from, to, piece, base.EMPTY, base.EMPTY, base.EP_TYPE_NONE, base.CASTLE_TYPE_NONE)
@@ -889,8 +954,12 @@ func (b *Board) GenerateSlidingMoves(mlist *base.MoveList, color base.Color, pty
 					// Piece is pinned but target is not on pin path -> next direction.
 					break
 				} else if isCheck && b.Squares[to.ToInfoIndex()] != base.INFO_CHECK {
-					// King is in check but move does not change that fact -> skip target square
-					continue
+					tpiece = b.Squares[to]
+					if !tpiece.IsEmpty() {
+						// King is in check but the move does not capture the checker
+						// nor does it block the check -> skip direction.
+						break
+					}
 				} else {
 					tpiece = b.Squares[to]
 					if tpiece.HasColor(color) {
@@ -916,6 +985,111 @@ func (b *Board) GenerateSlidingMoves(mlist *base.MoveList, color base.Color, pty
 		}
 
 	}
+}
+
+func (b *Board) FastPerft(depth int, doprint bool) uint64 {
+	mlist := base.MoveList{}
+	cpy := *b
+	nodes := uint64(0)
+
+	b.GenerateAllLegalMoves(&mlist, b.Player)
+	if depth == 1 {
+		if doprint {
+			for i := uint16(0); i < mlist.Size; i++ {
+				move := &mlist.Moves[i]
+				fmt.Println(depth, ":", move.String())
+				b.MakeLegalMove(*move)
+				fmt.Println(b.String())
+				*b = cpy
+			}
+		}
+		return uint64(mlist.Size)
+	}
+
+	for i := uint16(0); i < mlist.Size; i++ {
+		move := &mlist.Moves[i]
+		b.MakeLegalMove(*move)
+		if doprint {
+			fmt.Println(depth, ":", move.String())
+		}
+		n := b.FastPerft(depth-1, doprint)
+		nodes += n
+
+		*b = cpy //ugly undo
+	}
+
+	return nodes
+}
+
+func (b *Board) DividePerft(depth int, doprint bool) map[string]uint64 {
+	mlist := base.MoveList{}
+	cpy := *b
+	results := map[string]uint64{}
+
+	b.GenerateAllLegalMoves(&mlist, b.Player)
+
+	if depth == 1 {
+		for i := uint16(0); i < mlist.Size; i++ {
+			move := &mlist.Moves[i]
+			results[move.String()] = 1
+		}
+		return results
+	}
+
+	for i := uint16(0); i < mlist.Size; i++ {
+		move := &mlist.Moves[i]
+		b.MakeLegalMove(*move)
+		if doprint {
+			fmt.Println(depth, ":", move.String())
+		}
+		n := b.FastPerft(depth-1, doprint)
+		results[move.String()] += n
+
+		*b = cpy //ugly undo
+	}
+
+	return results
+}
+
+func (b *Board) AnalyzerPerft(depth int, capt, check uint64) (uint64, uint64, uint64) {
+	mlist := base.MoveList{}
+	cpy := *b
+	nodes, captures, checks := uint64(0), uint64(0), uint64(0)
+
+	//	b.GenerateAllLegalMoves(&mlist, b.Player)
+	//	if depth == 1 {
+	//		return uint64(mlist.Size)
+	//	}
+
+	if depth == 0 {
+		return 1, capt, check
+	}
+	b.GenerateAllLegalMoves(&mlist, b.Player)
+
+	if mlist.Size == 0 {
+		fmt.Println(&b)
+	}
+
+	for i := uint16(0); i < mlist.Size; i++ {
+		move := &mlist.Moves[i]
+		b.MakeLegalMove(*move)
+		capt := uint64(0)
+		check := uint64(0)
+		if move.CapturedPiece != base.EMPTY {
+			capt = 1
+		}
+		if b.CheckInfo.OnBoard() {
+			check = 1
+		}
+		n, ca, ch := b.AnalyzerPerft(depth-1, capt, check)
+		nodes += n
+		captures += ca
+		checks += ch
+
+		*b = cpy //ugly undo
+	}
+
+	return nodes, captures, checks
 }
 
 func (b *Board) InfoBoardString() string {

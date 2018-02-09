@@ -213,7 +213,7 @@ func TestGeneratePawnMoves(t *testing.T) {
 		"[Pe5xpd6 e.p., Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Ph2-h3, Ph2-h4, Pd4xpc5, Pe5xnf6, Pe5-e6]",
 		"[Pe5xpf6 e.p., Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Pg7xbf8=Q, Pg7xbf8=R, Pg7xbf8=B, Pg7xbf8=N, Pg7xrh8=Q, Pg7xrh8=R, Pg7xrh8=B, Pg7xrh8=N]",
 		"[Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Pg7xbf8=Q, Pg7xbf8=R, Pg7xbf8=B, Pg7xbf8=N, Pg7xrh8=Q, Pg7xrh8=R, Pg7xrh8=B, Pg7xrh8=N, Pg7-g8=Q, Pg7-g8=R, Pg7-g8=B, Pg7-g8=N]",
-		"[pc4xPb3 e.p., ph2xNg1=q, ph2xNg1=r, ph2xNg1=b, ph2xNg1=n, ph2-h1=q, ph2-h1=r, ph2-h1=b, ph2-h1=n, pc4-c3, pc6-c5, pa7-a6, pa7-a5, pb7-b5, ph7-h6, ph7-h5]",
+		"[pc4xPb3 e.p., ph2xNg1=q, ph2xNg1=r, ph2xNg1=b, ph2xNg1=n, ph2-h1=q, ph2-h1=r, ph2-h1=b, ph2-h1=n, pc4-c3, pc6-c5, pa7-a6, pa7-a5, ph7-h6, ph7-h5]",
 		"[Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pd2-d3, Pd2-d4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Ph2-h3, Ph2-h4]",
 	}
 
@@ -226,7 +226,7 @@ func TestGeneratePawnMoves(t *testing.T) {
 		board.GeneratePawnMoves(&mlist, board.Player)
 		strmoves := mlist.String()
 		if strmoves != results[i] {
-			t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, results[i], &mlist)
+			t.Fatalf("Position\n %s \n test %d\n expected move list: %s\n but got           : %s\n", &board, i, results[i], &mlist)
 		}
 	}
 }

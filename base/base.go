@@ -67,6 +67,7 @@ const (
 const (
 	INFO_NONE Info = iota
 	INFO_CHECK
+	INFO_FORBIDDEN_ESCAPE
 	INFO_ATTACKED
 	INFO_PIN
 )
@@ -138,6 +139,7 @@ func (p Piece) PieceColor() Color {
 }
 
 func (p Piece) HasColor(color Color) bool {
+	//	fmt.Println(COLOR_TEST_MASK&p, "==", color, "?")
 	return (COLOR_TEST_MASK & p) == color
 }
 
