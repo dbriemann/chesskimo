@@ -244,6 +244,7 @@ func (b *Board) clearInfoBoard() {
 func (b *Board) MakeLegalMove(m base.Move) {
 	// Remove the color from piece.
 	ptype := m.Piece & base.PIECE_MASK
+	oppColor := b.Player.Flip()
 
 	// Remove piece from board state if it is a capture.
 	if m.CapturedPiece != base.EMPTY {
@@ -255,6 +256,15 @@ func (b *Board) MakeLegalMove(m base.Move) {
 		}
 
 		b.removePiece(capSq)
+
+		// If capture captures a rook disable that side for castling.
+		// TODO this could be realized differently:
+		// check castling squares for specific values.. add one for rook.
+		if m.To == base.CASTLING_ROOK_SHORT[oppColor] {
+			b.CastleShort[oppColor] = false
+		} else if m.To == base.CASTLING_ROOK_LONG[oppColor] {
+			b.CastleLong[oppColor] = false
+		}
 	}
 
 	// Now make the actual move on the board.
@@ -293,10 +303,17 @@ func (b *Board) MakeLegalMove(m base.Move) {
 		b.CastleLong[b.Player] = false
 		// The rook must be magically moved.
 		if m.CastleType == base.CASTLE_TYPE_SHORT {
-			b.Squares[base.CASTLING_PATH_SHORT[b.Player][0]], b.Squares[base.CASTLING_ROOK_SHORT[b.Player]] = base.ROOK|b.Player, base.EMPTY
+			rookFrom := base.CASTLING_ROOK_SHORT[b.Player]
+			rookTo := base.CASTLING_PATH_SHORT[b.Player][0]
+			b.Squares[rookTo], b.Squares[rookFrom] = base.ROOK|b.Player, base.EMPTY
+			b.Rooks[b.Player].Move(rookFrom, rookTo)
 		} else if m.CastleType == base.CASTLE_TYPE_LONG {
-			b.Squares[base.CASTLING_PATH_LONG[b.Player][0]], b.Squares[base.CASTLING_ROOK_LONG[b.Player]] = base.ROOK|b.Player, base.EMPTY
+			rookFrom := base.CASTLING_ROOK_LONG[b.Player]
+			rookTo := base.CASTLING_PATH_LONG[b.Player][0]
+			b.Squares[rookTo], b.Squares[rookFrom] = base.ROOK|b.Player, base.EMPTY
+			b.Rooks[b.Player].Move(rookFrom, rookTo)
 		}
+
 	default:
 		// This should not happen..
 		panic("Board.MakeLegalMove: " + fmt.Sprintf("%v", m))
@@ -390,14 +407,13 @@ func (b *Board) IsSquareAttacked(sq, ignoreSq base.Square, color base.Color) boo
 	}
 
 	// 3. Detect attacks by sliders.
-	return b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Queens[oppColor], &base.DIAGONAL_DIRS, base.QUEEN) ||
-		b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Queens[oppColor], &base.ORTHOGONAL_DIRS, base.QUEEN) ||
-		b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Bishops[oppColor], &base.DIAGONAL_DIRS, base.BISHOP) ||
-		b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Rooks[oppColor], &base.ORTHOGONAL_DIRS, base.ROOK)
+	return b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Queens[oppColor], base.QUEEN) ||
+		b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Bishops[oppColor], base.BISHOP) ||
+		b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Rooks[oppColor], base.ROOK)
 }
 
 // IsSqAttackedBySlider tests if a specific square is attacked by an enemy slider.
-func (b *Board) IsSqAttackedBySlider(color base.Color, sq, ignoreSq base.Square, pieceList *base.PieceList, dirList *[4]int8, ptype base.Piece) bool {
+func (b *Board) IsSqAttackedBySlider(color base.Color, sq, ignoreSq base.Square, pieceList *base.PieceList, ptype base.Piece) bool {
 	for i := uint8(0); i < pieceList.Size; i++ {
 		sliderSq := pieceList.Pieces[i]
 		if sliderSq == ignoreSq {
@@ -478,29 +494,22 @@ EXIT_PAWN_CHECK:
 	// 2.b No double check testing is needed. Pawn and knight cannot give double check.
 
 	// 3. Detect checks (and pins) by Sliders.
-	// 3.a) bishops
-	checkCounter += b.DetectSliderChecksAndPins(color, &pinMarker, checkCounter, &b.Bishops[oppColor], &base.DIAGONAL_DIRS, base.BISHOP)
+	// 3.a) queens
+	checkCounter += b.DetectSliderChecksAndPins(color, &pinMarker, checkCounter, &b.Queens[oppColor], base.QUEEN)
 	if checkCounter > 1 {
 		// Double check detected -> everything else is not of interest now.
 		b.CheckInfo = CHECK_DOUBLE_CHECK
 		goto PRETTY_PRINT_RETURN
 	}
-	// 3.b) queens diagonally
-	checkCounter += b.DetectSliderChecksAndPins(color, &pinMarker, checkCounter, &b.Queens[oppColor], &base.DIAGONAL_DIRS, base.QUEEN)
+	// 3.b) bishops
+	checkCounter += b.DetectSliderChecksAndPins(color, &pinMarker, checkCounter, &b.Bishops[oppColor], base.BISHOP)
 	if checkCounter > 1 {
 		// Double check detected -> everything else is not of interest now.
 		b.CheckInfo = CHECK_DOUBLE_CHECK
 		goto PRETTY_PRINT_RETURN
 	}
 	// 3.c) rooks
-	checkCounter += b.DetectSliderChecksAndPins(color, &pinMarker, checkCounter, &b.Rooks[oppColor], &base.ORTHOGONAL_DIRS, base.ROOK)
-	if checkCounter > 1 {
-		// Double check detected -> everything else is not of interest now.
-		b.CheckInfo = CHECK_DOUBLE_CHECK
-		goto PRETTY_PRINT_RETURN
-	}
-	// 3.d) queens orthogonally
-	checkCounter += b.DetectSliderChecksAndPins(color, &pinMarker, checkCounter, &b.Queens[oppColor], &base.ORTHOGONAL_DIRS, base.ROOK)
+	checkCounter += b.DetectSliderChecksAndPins(color, &pinMarker, checkCounter, &b.Rooks[oppColor], base.ROOK)
 	if checkCounter > 1 {
 		// Double check detected -> everything else is not of interest now.
 		b.CheckInfo = CHECK_DOUBLE_CHECK
@@ -513,15 +522,17 @@ PRETTY_PRINT_RETURN:
 	//	fmt.Println()
 }
 
-func (b *Board) DetectSliderChecksAndPins(color base.Color, pmarker *base.Info, ccount int, pieceList *base.PieceList, dirList *[4]int8, ptype base.Piece) int {
+func (b *Board) DetectSliderChecksAndPins(color base.Color, pmarker *base.Info, ccount int, pieceList *base.PieceList, ptype base.Piece) int {
 	kingSq := b.Kings[color]
 	checkCounter := 0
+	//	fmt.Println("------> ENTER DETECT")
 
 	for i := uint8(0); i < pieceList.Size; i++ {
 		sliderSq := pieceList.Pieces[i]
 		//		fmt.Println("SLIDER", base.PrintBoardIndex[sliderSq])
 		diff := kingSq.Diff(sliderSq)
-		if SQUARE_DIFFS[diff].Contains(ptype) {
+		diffTypes := SQUARE_DIFFS[diff]
+		if diffTypes.Contains(ptype) {
 			// The slider possibly checks the king or pins a piece.
 			diffdir := DIFF_DIRS[diff]
 			//			fmt.Println("POSSIBLE PATH DIR:", diffdir)
@@ -548,7 +559,7 @@ func (b *Board) DetectSliderChecksAndPins(color base.Color, pmarker *base.Info, 
 					}
 				} else {
 					// An enemy piece was encountered
-					if curPiece.Contains(ptype) {
+					if stepSq == sliderSq { //curPiece.Overlaps(diffTypes) {
 						//						fmt.Println("ENEMY -> SLIDER")
 						// We reached the checker/pinner -> decide.
 						if info == base.INFO_NONE {
@@ -649,7 +660,7 @@ func (b *Board) GeneratePawnMoves(mlist *base.MoveList, color base.Color) {
 		for _, dir := range base.PAWN_CAPTURE_DIRS[oppColor] {
 			from = base.Square(int8(to) + dir)
 			tpiece = b.Squares[from]
-			if from.OnBoard() && tpiece.HasColor(color) {
+			if from.OnBoard() && tpiece == base.PAWN|color {
 				move, legal = b.newPawnMoveIfLegal(color, from, to, piece, base.PAWN|oppColor, base.EMPTY, base.EP_TYPE_CAPTURE, base.CASTLE_TYPE_NONE)
 				if legal {
 					mlist.Put(move)
@@ -810,6 +821,7 @@ func (b *Board) GenerateKnightMoves(mlist *base.MoveList, color base.Color) {
 			to = base.Square(int8(from) + dir)
 			if to.OnBoard() {
 				tpiece = b.Squares[to]
+				//				fmt.Println(base.PrintBoardIndex[from], base.PrintBoardIndex[to], tpiece)
 				if isCheck && b.Squares[to.ToInfoIndex()] != base.INFO_CHECK {
 					// If there is a check but the move's target does not change that fact -> impossible move.
 					continue
@@ -887,14 +899,16 @@ func (b *Board) GenerateKingMoves(mlist *base.MoveList, color base.Color) {
 
 	// b. Try castle queen-side
 	// Is it still allowed?
-	if b.CastleShort[color] {
+	if b.CastleLong[color] {
 		sq1 := base.CASTLING_PATH_LONG[color][0]
 		sq2 := base.CASTLING_PATH_LONG[color][1]
+		sq3 := base.CASTLING_PATH_LONG[color][2]
 
 		// Test if the squares on short castling path are empty.
 		sq1Piece := b.Squares[sq1]
 		sq2Piece := b.Squares[sq2]
-		if sq1Piece.IsEmpty() && sq2Piece.IsEmpty() {
+		sq3Piece := b.Squares[sq3]
+		if sq1Piece.IsEmpty() && sq2Piece.IsEmpty() && sq3Piece.IsEmpty() {
 			// Test if both squares are not attacked.
 			if targets[1] && !b.IsSquareAttacked(sq2, base.OTB, color) {
 				// Finally.. castling king-side is possible.
@@ -1010,7 +1024,7 @@ func (b *Board) FastPerft(depth int, doprint bool) uint64 {
 		move := &mlist.Moves[i]
 		b.MakeLegalMove(*move)
 		if doprint {
-			fmt.Println(depth, ":", move.String())
+			fmt.Println(depth, ":", move.Mini())
 		}
 		n := b.FastPerft(depth-1, doprint)
 		nodes += n
@@ -1031,7 +1045,7 @@ func (b *Board) DividePerft(depth int, doprint bool) map[string]uint64 {
 	if depth == 1 {
 		for i := uint16(0); i < mlist.Size; i++ {
 			move := &mlist.Moves[i]
-			results[move.String()] = 1
+			results[move.Mini()] = 1
 		}
 		return results
 	}
@@ -1040,10 +1054,10 @@ func (b *Board) DividePerft(depth int, doprint bool) map[string]uint64 {
 		move := &mlist.Moves[i]
 		b.MakeLegalMove(*move)
 		if doprint {
-			fmt.Println(depth, ":", move.String())
+			fmt.Println(depth, ":", move.Mini())
 		}
 		n := b.FastPerft(depth-1, doprint)
-		results[move.String()] += n
+		results[move.Mini()] += n
 
 		*b = cpy //ugly undo
 	}
@@ -1066,9 +1080,9 @@ func (b *Board) AnalyzerPerft(depth int, capt, check uint64) (uint64, uint64, ui
 	}
 	b.GenerateAllLegalMoves(&mlist, b.Player)
 
-	if mlist.Size == 0 {
-		fmt.Println(&b)
-	}
+	//	if mlist.Size == 0 {
+	//		fmt.Println(&b)
+	//	}
 
 	for i := uint16(0); i < mlist.Size; i++ {
 		move := &mlist.Moves[i]

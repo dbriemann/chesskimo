@@ -32,6 +32,16 @@ func NewMove(from, to Square, piece, cappiece, prompiece Piece, eptype, castlety
 	}
 }
 
+func (m *Move) Mini() string {
+	str := PrintBoardIndex[m.From] + PrintBoardIndex[m.To]
+	if m.PromotionPiece != EMPTY {
+		ptype := m.PromotionPiece & PIECE_MASK
+		str += PrintMap[ptype]
+	}
+
+	return str
+}
+
 func (m *Move) String() string {
 	// TODO - this should be somewhat performant in the end
 	// byte buffers?!

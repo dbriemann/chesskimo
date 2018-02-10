@@ -147,6 +147,10 @@ func (p Piece) HasColor(color Color) bool {
 //	return (p & piece) != 0
 //}
 
+func (p Piece) Overlaps(pieces Piece) bool {
+	return (p & pieces) != 0
+}
+
 func (p Piece) Contains(pieces Piece) bool {
 	return (p & pieces) == pieces
 }
