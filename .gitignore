@@ -24,8 +24,8 @@ _testmain.go
 *.prof
 
 ### manual ignores
-chesskimo
-bench
+/chesskimo
+/bench
 cover.out
 .idea
 prof.out
