@@ -12,7 +12,6 @@ func TestPerft(t *testing.T) {
 		"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1":             4865609,   // 1. Start position
 		"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1": 193690690, // 2. Good testposition
 		"n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1":                              3605103,   // 3. Many Promotions
-		"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0": 193690690, // 4. Kiwipete
 		"r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1":     15833292,  // 5. Dense
 		"8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0":                            674624,    // 6. Endgame
 	}
