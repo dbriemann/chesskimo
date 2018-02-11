@@ -50,13 +50,20 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
+	avgNPS := float64(0)
+
 	fmt.Println("Starting Chesskimo move generator benchmarks..")
 	for i := 0; i < len(testsets); i++ {
 		set := testsets[i]
 		res := testing.Benchmark(benchActive)
 		nps := float64(testsets[i].Result) / (float64(res.NsPerOp()) / NANOS_PER_SEC)
-		fmt.Printf("FEN: %s, depth: %d, nodes: %d, duration: %d msec, NPS: %f\n", set.Fen, set.Depth, set.Result, res.NsPerOp()/NANOS_PER_MILLI, nps)
+		avgNPS += nps
+		fmt.Printf("FEN: %s, depth: %d, nodes: %d, duration: %f sec, NPS: %f\n", set.Fen, set.Depth, set.Result, float64(res.NsPerOp())/NANOS_PER_SEC, nps)
 	}
+
+	avgNPS /= float64(len(testsets))
+
+	fmt.Printf("Average NPS: %f\n", avgNPS)
 }
 
 func benchActive(b *testing.B) {
