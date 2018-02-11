@@ -390,16 +390,12 @@ func (b *Board) IsSquareAttacked(sq, ignoreSq Square, color Color) bool {
 	}
 
 	// 2. Detect attacks by pawns.
-	for i := uint8(0); i < b.Pawns[oppColor].Size; i++ {
-		pawnSq := b.Pawns[oppColor].Pieces[i]
-		if pawnSq == ignoreSq {
-			continue
-		}
-		for _, dir := range PAWN_CAPTURE_DIRS[oppColor] {
-			to := Square(int8(pawnSq) + dir)
-			if sq == to {
-				return true
-			}
+	oppPawn := PAWN | oppColor
+	for _, dir := range PAWN_CAPTURE_DIRS[color] {
+		maybePawnSq := Square(int8(sq) + dir)
+		if maybePawnSq.OnBoard() && b.Squares[maybePawnSq] == oppPawn {
+			// Found an attacking pawn by inspecting in reverse direction.
+			return true
 		}
 	}
 
