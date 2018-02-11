@@ -28,3 +28,5 @@ chesskimo
 bench
 cover.out
 .idea
+prof.out
+profile.grind
