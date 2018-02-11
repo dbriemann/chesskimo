@@ -1001,109 +1001,49 @@ func (b *Board) GenerateSlidingMoves(mlist *base.MoveList, color base.Color, pty
 	}
 }
 
-func (b *Board) FastPerft(depth int, doprint bool) uint64 {
+func (b *Board) Perft(depth int) uint64 {
 	mlist := base.MoveList{}
 	cpy := *b
 	nodes := uint64(0)
 
+	if depth <= 0 {
+		return 1
+	}
+
 	b.GenerateAllLegalMoves(&mlist, b.Player)
 	if depth == 1 {
-		if doprint {
-			for i := uint16(0); i < mlist.Size; i++ {
-				move := &mlist.Moves[i]
-				fmt.Println(depth, ":", move.String())
-				b.MakeLegalMove(*move)
-				fmt.Println(b.String())
-				*b = cpy
-			}
-		}
 		return uint64(mlist.Size)
 	}
 
 	for i := uint16(0); i < mlist.Size; i++ {
 		move := &mlist.Moves[i]
 		b.MakeLegalMove(*move)
-		if doprint {
-			fmt.Println(depth, ":", move.Mini())
-		}
-		n := b.FastPerft(depth-1, doprint)
+		n := b.Perft(depth - 1)
 		nodes += n
 
-		*b = cpy //ugly undo
+		*b = cpy //TODO --> better move undo
 	}
 
 	return nodes
 }
 
-func (b *Board) DividePerft(depth int, doprint bool) map[string]uint64 {
+func (b *Board) PerftDivide(depth int) map[string]uint64 {
 	mlist := base.MoveList{}
 	cpy := *b
 	results := map[string]uint64{}
 
 	b.GenerateAllLegalMoves(&mlist, b.Player)
 
-	if depth == 1 {
-		for i := uint16(0); i < mlist.Size; i++ {
-			move := &mlist.Moves[i]
-			results[move.Mini()] = 1
-		}
-		return results
-	}
-
 	for i := uint16(0); i < mlist.Size; i++ {
 		move := &mlist.Moves[i]
 		b.MakeLegalMove(*move)
-		if doprint {
-			fmt.Println(depth, ":", move.Mini())
-		}
-		n := b.FastPerft(depth-1, doprint)
+		n := b.Perft(depth - 1)
 		results[move.Mini()] += n
 
-		*b = cpy //ugly undo
+		*b = cpy //TODO --> better move undo
 	}
 
 	return results
-}
-
-func (b *Board) AnalyzerPerft(depth int, capt, check uint64) (uint64, uint64, uint64) {
-	mlist := base.MoveList{}
-	cpy := *b
-	nodes, captures, checks := uint64(0), uint64(0), uint64(0)
-
-	//	b.GenerateAllLegalMoves(&mlist, b.Player)
-	//	if depth == 1 {
-	//		return uint64(mlist.Size)
-	//	}
-
-	if depth == 0 {
-		return 1, capt, check
-	}
-	b.GenerateAllLegalMoves(&mlist, b.Player)
-
-	//	if mlist.Size == 0 {
-	//		fmt.Println(&b)
-	//	}
-
-	for i := uint16(0); i < mlist.Size; i++ {
-		move := &mlist.Moves[i]
-		b.MakeLegalMove(*move)
-		capt := uint64(0)
-		check := uint64(0)
-		if move.CapturedPiece != base.EMPTY {
-			capt = 1
-		}
-		if b.CheckInfo.OnBoard() {
-			check = 1
-		}
-		n, ca, ch := b.AnalyzerPerft(depth-1, capt, check)
-		nodes += n
-		captures += ca
-		checks += ch
-
-		*b = cpy //ugly undo
-	}
-
-	return nodes, captures, checks
 }
 
 func (b *Board) InfoBoardString() string {

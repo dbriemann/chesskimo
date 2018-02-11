@@ -5,4 +5,4 @@ debug:
 	go build
 
 release:
-	go build -B
+	go build -gcflags=-B

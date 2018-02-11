@@ -2,9 +2,45 @@ package engine
 
 import (
 	"testing"
+	"time"
 
 	"github.com/dbriemann/chesskimo/base"
 )
+
+func TestPerft(t *testing.T) {
+	// Currently test validates all FEN positions with perft until depth of 5.
+	depth := 5
+	testset := map[string]uint64{
+		"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1":             4865609,   // 1. Start position
+		"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1": 193690690, // 2. Good testposition
+		"n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1":                              3605103,   // 3. Many Promotions
+		"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0": 193690690, // 4. Kiwipete
+		"r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1":     15833292,  // 5. Dense
+		"8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0":                            674624,    // 6. Endgame
+	}
+
+	board := NewBoard()
+
+	set := 0
+	for fen, result := range testset {
+		err := board.SetFEN(fen)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		start := time.Now()
+		moves := board.Perft(depth)
+		end := time.Now()
+
+		if moves != result {
+			t.Fatalf("Perft result for FEN %s (test %d) is %d but should be %d at depth %d.\n", fen, set, moves, result, depth)
+		} else {
+			t.Logf("Perft result for FEN %s (test %d) is %d moves. Time used: %f\n", fen, set, moves, end.Sub(start).Seconds())
+		}
+
+		set++
+	}
+}
 
 func TestSquareDiffs(t *testing.T) {
 	type set struct {
