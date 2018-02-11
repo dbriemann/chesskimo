@@ -1,4 +1,4 @@
-package base
+package chesskimo
 
 const (
 	// If this is not enough at any point the engine will blow :)

@@ -1,10 +1,8 @@
-package engine
+package chesskimo
 
 import (
 	"testing"
 	"time"
-
-	"github.com/dbriemann/chesskimo/base"
 )
 
 func TestPerft(t *testing.T) {
@@ -44,71 +42,71 @@ func TestPerft(t *testing.T) {
 
 func TestSquareDiffs(t *testing.T) {
 	type set struct {
-		From   base.Square
-		To     base.Square
-		Pieces base.Piece
+		From   Square
+		To     Square
+		Pieces Piece
 	}
 
 	testset := []set{
-		set{0x72, 0x12, base.ROOK | base.QUEEN},               // file test down to up
-		set{0x12, 0x72, base.ROOK | base.QUEEN},               // file test up to down
-		set{0x51, 0x54, base.ROOK | base.QUEEN},               // rank test left to right
-		set{0x54, 0x51, base.ROOK | base.QUEEN},               // rank test right to left
-		set{0x64, 0x37, base.BISHOP | base.QUEEN},             // diagonal up_left to down_right test
-		set{0x37, 0x64, base.BISHOP | base.QUEEN},             // diagonal down_right to up_left test
-		set{0x77, 0x0, base.BISHOP | base.QUEEN},              // diagonal up_right to down_left test
-		set{0x0, 0x77, base.BISHOP | base.QUEEN},              // diagonal down_left to up_right test
-		set{0x0, 0x12, base.KNIGHT},                           // knight jump right+up_right
-		set{0x0, 0x21, base.KNIGHT},                           // knight jump up+up_right
-		set{0x77, 0x56, base.KNIGHT},                          // knight jump down+down_left
-		set{0x77, 0x65, base.KNIGHT},                          // knight jump left+down_left
-		set{0x74, 0x65, base.KING | base.QUEEN | base.BISHOP}, // one step diagonal (king test)
-		set{0x4, 0x5, base.KING | base.QUEEN | base.ROOK},     // one step orthogonal (king test)
+		set{0x72, 0x12, ROOK | QUEEN},          // file test down to up
+		set{0x12, 0x72, ROOK | QUEEN},          // file test up to down
+		set{0x51, 0x54, ROOK | QUEEN},          // rank test left to right
+		set{0x54, 0x51, ROOK | QUEEN},          // rank test right to left
+		set{0x64, 0x37, BISHOP | QUEEN},        // diagonal up_left to down_right test
+		set{0x37, 0x64, BISHOP | QUEEN},        // diagonal down_right to up_left test
+		set{0x77, 0x0, BISHOP | QUEEN},         // diagonal up_right to down_left test
+		set{0x0, 0x77, BISHOP | QUEEN},         // diagonal down_left to up_right test
+		set{0x0, 0x12, KNIGHT},                 // knight jump right+up_right
+		set{0x0, 0x21, KNIGHT},                 // knight jump up+up_right
+		set{0x77, 0x56, KNIGHT},                // knight jump down+down_left
+		set{0x77, 0x65, KNIGHT},                // knight jump left+down_left
+		set{0x74, 0x65, KING | QUEEN | BISHOP}, // one step diagonal (king test)
+		set{0x4, 0x5, KING | QUEEN | ROOK},     // one step orthogonal (king test)
 		// impossible moves
-		set{0x0, 0x71, base.NONE},
-		set{0x5, 0x36, base.NONE},
+		set{0x0, 0x71, NONE},
+		set{0x5, 0x36, NONE},
 	}
 
 	for i, ts := range testset {
 		diff := 0x77 + ts.From - ts.To
 		lookup := SQUARE_DIFFS[diff]
 		if !(lookup == ts.Pieces) {
-			t.Fatalf("Test %d from %s to %s should be reachable by pieces %d but result ist %d\n", i, base.PrintBoardIndex[ts.From], base.PrintBoardIndex[ts.To], ts.Pieces, lookup)
+			t.Fatalf("Test %d from %s to %s should be reachable by pieces %d but result ist %d\n", i, PrintBoardIndex[ts.From], PrintBoardIndex[ts.To], ts.Pieces, lookup)
 		}
 	}
 }
 
 func TestDiffDirs(t *testing.T) {
 	type set struct {
-		From base.Square
-		To   base.Square
+		From Square
+		To   Square
 		Dir  int8
 	}
 
 	testset := []set{
-		set{0x70, 0x07, base.DOWN_RIGHT},
-		set{0x47, 0x65, base.UP_LEFT},
-		set{0x77, 0x11, base.DOWN_LEFT},
-		set{0x24, 0x46, base.UP_RIGHT},
-		set{0x61, 0x66, base.RIGHT},
-		set{0x33, 0x30, base.LEFT},
-		set{0x22, 0x62, base.UP},
-		set{0x55, 0x25, base.DOWN},
-		set{0x00, 0x12, base.RIGHT + base.UP_RIGHT},
-		set{0x00, 0x21, base.UP + base.UP_RIGHT},
-		set{0x70, 0x62, base.RIGHT + base.DOWN_RIGHT},
-		set{0x70, 0x51, base.DOWN + base.DOWN_RIGHT},
-		set{0x77, 0x65, base.LEFT + base.DOWN_LEFT},
-		set{0x77, 0x56, base.DOWN + base.DOWN_LEFT},
-		set{0x07, 0x15, base.LEFT + base.UP_LEFT},
-		set{0x07, 0x26, base.UP + base.UP_LEFT},
+		set{0x70, 0x07, DOWN_RIGHT},
+		set{0x47, 0x65, UP_LEFT},
+		set{0x77, 0x11, DOWN_LEFT},
+		set{0x24, 0x46, UP_RIGHT},
+		set{0x61, 0x66, RIGHT},
+		set{0x33, 0x30, LEFT},
+		set{0x22, 0x62, UP},
+		set{0x55, 0x25, DOWN},
+		set{0x00, 0x12, RIGHT + UP_RIGHT},
+		set{0x00, 0x21, UP + UP_RIGHT},
+		set{0x70, 0x62, RIGHT + DOWN_RIGHT},
+		set{0x70, 0x51, DOWN + DOWN_RIGHT},
+		set{0x77, 0x65, LEFT + DOWN_LEFT},
+		set{0x77, 0x56, DOWN + DOWN_LEFT},
+		set{0x07, 0x15, LEFT + UP_LEFT},
+		set{0x07, 0x26, UP + UP_LEFT},
 	}
 
 	for i, ts := range testset {
 		diff := 0x77 + ts.From - ts.To
 		lookup := DIFF_DIRS[diff]
 		if !(lookup == ts.Dir) {
-			t.Fatalf("Test %d from %s to %s should be dir %d but result ist %d\n", i, base.PrintBoardIndex[ts.From], base.PrintBoardIndex[ts.To], ts.Dir, lookup)
+			t.Fatalf("Test %d from %s to %s should be dir %d but result ist %d\n", i, PrintBoardIndex[ts.From], PrintBoardIndex[ts.To], ts.Dir, lookup)
 		}
 	}
 }
@@ -124,7 +122,7 @@ func TestGenerateKingMoves(t *testing.T) {
 	}
 
 	board := NewBoard()
-	mlist := base.MoveList{}
+	mlist := MoveList{}
 
 	for i, fen := range fens {
 		board.SetFEN(fen)
@@ -148,7 +146,7 @@ func TestGenerateQueenMoves(t *testing.T) {
 	}
 
 	board := NewBoard()
-	mlist := base.MoveList{}
+	mlist := MoveList{}
 
 	for i, fen := range fens {
 		board.SetFEN(fen)
@@ -172,7 +170,7 @@ func TestGenerateRookMoves(t *testing.T) {
 	}
 
 	board := NewBoard()
-	mlist := base.MoveList{}
+	mlist := MoveList{}
 
 	for i, fen := range fens {
 		board.SetFEN(fen)
@@ -196,7 +194,7 @@ func TestGenerateBishopMoves(t *testing.T) {
 	}
 
 	board := NewBoard()
-	mlist := base.MoveList{}
+	mlist := MoveList{}
 
 	for i, fen := range fens {
 		board.SetFEN(fen)
@@ -222,7 +220,7 @@ func TestGenerateKnightMoves(t *testing.T) {
 	}
 
 	board := NewBoard()
-	mlist := base.MoveList{}
+	mlist := MoveList{}
 
 	for i, fen := range fens {
 		board.SetFEN(fen)
@@ -254,7 +252,7 @@ func TestGeneratePawnMoves(t *testing.T) {
 	}
 
 	board := NewBoard()
-	mlist := base.MoveList{}
+	mlist := MoveList{}
 
 	for i, fen := range fens {
 		board.SetFEN(fen)

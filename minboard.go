@@ -1,4 +1,4 @@
-package base
+package chesskimo
 
 // MinBoard defines a minimalist type of board structure,
 // which is used to transport different types of board encodings

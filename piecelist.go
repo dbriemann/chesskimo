@@ -1,4 +1,4 @@
-package base
+package chesskimo
 
 // PieceList holds squares for all equal piece types of a single color.
 // The size is the maximum of occurences. Some pieces can only occur

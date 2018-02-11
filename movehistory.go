@@ -1,4 +1,4 @@
-package base
+package chesskimo
 
 // TODO make this variable in size
 

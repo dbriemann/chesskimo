@@ -1,11 +1,9 @@
-package fen
+package chesskimo
 
 import (
 	"errors"
 	"strconv"
 	"strings"
-
-	"github.com/dbriemann/chesskimo/base"
 )
 
 var (
@@ -21,20 +19,20 @@ var (
 	ErrFENMoveNumInvalid = errors.New("FEN has invalid move number")
 
 	// FENMap maps FEN piece symbols (plus empty ' ') to the internal definition.
-	FENMap = map[rune]base.Piece{
-		'P': base.WPAWN,
-		'N': base.WKNIGHT,
-		'B': base.WBISHOP,
-		'R': base.WROOK,
-		'Q': base.WQUEEN,
-		'K': base.WKING,
-		'p': base.BPAWN,
-		'n': base.BKNIGHT,
-		'b': base.BBISHOP,
-		'r': base.BROOK,
-		'q': base.BQUEEN,
-		'k': base.BKING,
-		' ': base.EMPTY,
+	FENMap = map[rune]Piece{
+		'P': WPAWN,
+		'N': WKNIGHT,
+		'B': WBISHOP,
+		'R': WROOK,
+		'Q': WQUEEN,
+		'K': WKING,
+		'p': BPAWN,
+		'n': BKNIGHT,
+		'b': BBISHOP,
+		'r': BROOK,
+		'q': BQUEEN,
+		'k': BKING,
+		' ': EMPTY,
 	}
 )
 
@@ -56,8 +54,8 @@ var (
 // 	return true
 // }
 
-func ParseFEN(fen string) (base.MinBoard, error) {
-	mb := base.NewMinBoard()
+func ParseFEN(fen string) (MinBoard, error) {
+	mb := NewMinBoard()
 
 	// Extract fields.
 	fields, err := splitFENFields(fen)
@@ -137,8 +135,8 @@ func splitFENFields(fen string) ([]string, error) {
 // 1|[0,1,2,3,4,5,6,7, <- array index 0 is white rook @ A1
 //  +-----------------
 //
-func parseFENPieces(pieces string) ([64]base.Piece, error) {
-	board := [64]base.Piece{}
+func parseFENPieces(pieces string) ([64]Piece, error) {
+	board := [64]Piece{}
 
 	// Reverse ranks to transform from FEN to internal representation.
 	ranks := strings.Split(pieces, "/")
@@ -180,13 +178,13 @@ func parseFENPieces(pieces string) ([64]base.Piece, error) {
 }
 
 // ParseColor parses the active color from the 'color' string.
-func parseFENColor(color string) (base.Color, error) {
+func parseFENColor(color string) (Color, error) {
 	// color = strings.ToLower(color)
 	switch color {
 	case "w":
-		return base.WHITE, nil
+		return WHITE, nil
 	case "b":
-		return base.BLACK, nil
+		return BLACK, nil
 	default:
 		return 0, ErrFENColorInvalid
 	}
@@ -205,9 +203,9 @@ func parseFENCastlingRights(castle string) ([2]bool, [2]bool) {
 }
 
 // ParseEnPassent parses the current possible en passent capture square, if there is one.
-func parseFENEnPassent(ep string) (base.Square, error) {
+func parseFENEnPassent(ep string) (Square, error) {
 	if ep == "-" {
-		return base.OTB, nil
+		return OTB, nil
 	}
 	sq, err := parseFENSquare(ep)
 	return sq, err
@@ -226,16 +224,16 @@ func parseFENMoveNumber(num string) (uint16, error) {
 	return uint16(n), nil
 }
 
-func parseFENSquare(sq string) (base.Square, error) {
+func parseFENSquare(sq string) (Square, error) {
 	if len(sq) != 2 {
-		return base.OTB, ErrFENSquareInvalid
+		return OTB, ErrFENSquareInvalid
 	}
 	r, f := sq[0], sq[1]
-	rank, file := base.Square(r)-97, base.Square(f)-49
+	rank, file := Square(r)-97, Square(f)-49
 
-	idx := base.Square(rank + file*8)
+	idx := Square(rank + file*8)
 	if idx < 0 || idx > 63 {
-		return base.OTB, ErrFENSquareInvalid
+		return OTB, ErrFENSquareInvalid
 	}
 
 	return idx, nil

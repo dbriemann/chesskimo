@@ -1,9 +1,7 @@
-package fen
+package chesskimo
 
 import (
 	"testing"
-
-	"github.com/dbriemann/chesskimo/base"
 )
 
 // TestSplitOK tests if the SplitFields function behaves correctly.
@@ -62,9 +60,9 @@ func TestParsePieces(t *testing.T) {
 
 // TestParseColor tests if the ParseColor function behaves correctly.
 func TestParseColor(t *testing.T) {
-	valid := map[string]base.Color{
-		"w": base.WHITE,
-		"b": base.BLACK,
+	valid := map[string]Color{
+		"w": WHITE,
+		"b": BLACK,
 	}
 	invalid := []string{" ", "-", " w", " b", "w ", "b ", "W", "B", "#", "?", "a"}
 
@@ -111,7 +109,7 @@ func TestParseCastlingRights(t *testing.T) {
 func TestParseEnPassent(t *testing.T) {
 	// No en passent square.
 	sq, err := parseFENEnPassent("-")
-	if err != nil || sq != base.OTB {
+	if err != nil || sq != OTB {
 		t.Fatalf("Expected pass, en passent FEN is: %s\n", "-")
 	}
 	// Alibi call.
@@ -121,7 +119,7 @@ func TestParseEnPassent(t *testing.T) {
 	}
 
 	// Test parseSquare success for all squares.
-	squares := map[string]base.Square{
+	squares := map[string]Square{
 		"a8": 56, "b8": 57, "c8": 58, "d8": 59, "e8": 60, "f8": 61, "g8": 62, "h8": 63,
 		"a7": 48, "b7": 49, "c7": 50, "d7": 51, "e7": 52, "f7": 53, "g7": 54, "h7": 55,
 		"a6": 40, "b6": 41, "c6": 42, "d6": 43, "e6": 44, "f6": 45, "g6": 46, "h6": 47,

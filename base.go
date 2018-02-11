@@ -1,4 +1,4 @@
-package base
+package chesskimo
 
 // Piece, Color, Square and Info are basically the same type (aliases)
 // but for clear declarations we use different type names.

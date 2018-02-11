@@ -1,4 +1,4 @@
-package base
+package chesskimo
 
 const (
 	EP_TYPE_NONE = iota

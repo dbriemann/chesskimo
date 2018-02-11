@@ -1,4 +1,4 @@
-package base
+package chesskimo
 
 import (
 	"testing"
