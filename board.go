@@ -665,7 +665,7 @@ func (b *Board) GeneratePawnMoves(mlist *MoveList, color Color) {
 					// We also have to check if the capture is also a promotion.
 					if to.IsPawnPromoting(color) {
 						// If one type of promotion is legal, all are.
-						legal = b.isPawnMoveLegal(from, to, to, tpiece, color)
+						legal = b.tryPawnMoveLegality(from, to, to, tpiece, color)
 						if legal {
 							for prom := QUEEN; prom >= KNIGHT; prom >>= 1 {
 								move = NewBitMove(from, to, prom)
@@ -688,7 +688,7 @@ func (b *Board) GeneratePawnMoves(mlist *MoveList, color Color) {
 		if b.Squares[to].IsEmpty() {
 			if to.IsPawnPromoting(color) {
 				// If one type of promotion is legal, all are.
-				legal = b.isPawnMoveLegal(from, to, to, EMPTY, color)
+				legal = b.tryPawnMoveLegality(from, to, to, EMPTY, color)
 				if legal {
 					for prom := QUEEN; prom >= KNIGHT; prom >>= 1 {
 						move = NewBitMove(from, to, prom)
@@ -724,8 +724,20 @@ func (b *Board) newPawnMoveIfLegal(color Color, from, to Square, ptype, capPiece
 		oppColor := color.Flip()
 		// Find square where captured pawn is.
 		capSq = Square(int8(to) + PAWN_PUSH_DIRS[oppColor])
+	} else {
+		isPinned := (b.Squares[from.ToInfoIndex()] >= INFO_PIN)
+		if isPinned && b.Squares[to.ToInfoIndex()] != b.Squares[from.ToInfoIndex()] {
+			// Pinned and cannot move there.
+			return BitMove(0), false
+		} else if b.CheckInfo.OnBoard() && b.Squares[to.ToInfoIndex()] != INFO_CHECK {
+			// Check and move doesn't change that.
+			return BitMove(0), false
+		} else {
+			return NewBitMove(from, to, promtype), true
+		}
 	}
-	legal := b.isPawnMoveLegal(from, to, capSq, capPiece, color)
+
+	legal := b.tryPawnMoveLegality(from, to, capSq, capPiece, color)
 	if legal {
 		return NewBitMove(from, to, promtype), true
 	} else {
@@ -734,7 +746,7 @@ func (b *Board) newPawnMoveIfLegal(color Color, from, to Square, ptype, capPiece
 
 }
 
-func (b *Board) isPawnMoveLegal(from, to, capSq Square, capPiece Piece, color Color) bool {
+func (b *Board) tryPawnMoveLegality(from, to, capSq Square, capPiece Piece, color Color) bool {
 	// Make the pawn move on the board but ignore possible promotions.
 	b.Squares[capSq] = EMPTY
 	b.Squares[to] = b.Squares[from] // Pawn is moved.

@@ -18,9 +18,9 @@ Average NPS: 13323544.387253
 
 # Version v0.0.3
 Starting Chesskimo move generator benchmarks..
-FEN: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1, depth: 6, nodes: 119060324, duration: 7.102696 sec, NPS: 16762693.632102
-FEN: r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1, depth: 5, nodes: 193690690, duration: 6.978861 sec, NPS: 27753910.214083
-FEN: n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1, depth: 6, nodes: 71179139, duration: 6.989606 sec, NPS: 10183570.053934
-FEN: r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1, depth: 5, nodes: 15833292, duration: 7.107447 sec, NPS: 2227704.625747
-FEN: 8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0, depth: 7, nodes: 178633661, duration: 7.092151 sec, NPS: 25187515.297686
-Average NPS: 16423078.764710
+FEN: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1, depth: 6, nodes: 119060324, duration: 5.942383 sec, NPS: 20035787.575299
+FEN: r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1, depth: 5, nodes: 193690690, duration: 5.952805 sec, NPS: 32537716.358782
+FEN: n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1, depth: 6, nodes: 71179139, duration: 6.041876 sec, NPS: 11780966.263972
+FEN: r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1, depth: 5, nodes: 15833292, duration: 5.978960 sec, NPS: 2648168.084300
+FEN: 8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0, depth: 7, nodes: 178633661, duration: 6.014141 sec, NPS: 29702273.075589
+Average NPS: 19340982.271588
