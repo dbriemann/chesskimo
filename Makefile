@@ -1,6 +1,9 @@
 test:
 	go test ./...
 	
+clean:
+	rm chesskimo bench
+	
 debug:
 	go build -o chesskimo -i -v -ldflags="-X main.version=$(shell git describe --always)" github.com/dbriemann/chesskimo/cmd/chesskimo
 	go build -o bench -i -v -ldflags="-X main.version=$(shell git describe --always)" github.com/dbriemann/chesskimo/cmd/bench

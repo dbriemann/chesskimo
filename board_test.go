@@ -18,8 +18,8 @@ func TestPerft(t *testing.T) {
 
 	board := NewBoard()
 
-	set := 0
 	for fen, result := range testset {
+		t.Log("FEN=", fen)
 		err := board.SetFEN(fen)
 		if err != nil {
 			t.Fatalf(err.Error())
@@ -30,12 +30,10 @@ func TestPerft(t *testing.T) {
 		end := time.Now()
 
 		if moves != result {
-			t.Fatalf("Perft result for FEN %s (test %d) is %d but should be %d at depth %d.\n", fen, set, moves, result, depth)
+			t.Fatalf("Perft result for FEN %s is %d but should be %d at depth %d.\n", fen, moves, result, depth)
 		} else {
-			t.Logf("Perft result for FEN %s (test %d) is %d moves. Time used: %f\n", fen, set, moves, end.Sub(start).Seconds())
+			t.Logf("Perft result for FEN %s is %d moves. Time used: %f\n", fen, moves, end.Sub(start).Seconds())
 		}
-
-		set++
 	}
 }
 
@@ -116,8 +114,8 @@ func TestGenerateKingMoves(t *testing.T) {
 		"r1bqk2r/ppp2ppp/2n2n2/1B1pp3/1b1PP1P1/2N2N2/PPP2P1P/R1BQK2R b KQkq g3 0 6",
 	}
 	results := []string{
-		"[Ke1-f1, Ke1-d1, Ke1-e2, 0-0, 0-0-0]",
-		"[ke8-f8, ke8-e7, ke8-d7, 0-0]",
+		"[e1f1, e1d1, e1e2, e1g1, e1c1]",
+		"[e8f8, e8e7, e8d7, e8g8]",
 	}
 
 	board := NewBoard()
@@ -140,8 +138,8 @@ func TestGenerateQueenMoves(t *testing.T) {
 		"r2qkbnr/pp2p1Pp/1np1b3/4P3/1PpP1P2/8/P6p/RNBQKBN1 b Qkq b3 0 12",
 	}
 	results := []string{
-		"[Qe1xqd1, Qe1-e2, Qe1-e3, Qe1xpe4, Qe1-f1, Qe1-g1, Qe1-h1, Qd3-c3, Qd3-b3, Qd3-a3, Qd3-d4, Qd3xpd5, Qd3-e3, Qd3xpf3, Qd3-d2, Qd3xqd1, Qa4-a5, Qa4-a6, Qa4-a7, Qa4-a8, Qa4xnb4, Qa4-a3, Qa4-a2, Qa4-a1, Qc5-b5, Qc5-a5, Qc5xrc6, Qc5xpd5, Qc5-c4, Qc5-c3, Qc5-c2, Qc5-c1, Qb7-a7, Qb7-b8, Qb7xnb6, Qc7-c8, Qc7xrd7, Qc7xrc6, Qe1-d2, Qe1-c3, Qe1xnb4, Qe1-f2, Qe1-g3, Qe1-h4, Qd3-c4, Qd3-b5, Qd3-a6, Qd3xpe4, Qd3-c2, Qd3-b1, Qd3-e2, Qd3-f1, Qa4-b5, Qa4xrc6, Qa4-b3, Qa4-c2, Qa4xqd1, Qc5xnb6, Qc5xpd6, Qc5xnb4, Qc5-d4, Qc5-e3, Qc5-f2, Qc5-g1, Qb7-a8, Qb7-c8, Qb7-a6, Qb7xrc6, Qc7-b8, Qc7-d8, Qc7xnb6, Qc7xpd6]",
-		"[qd8-c8, qd8-b8, qd8-d7, qd8-d6, qd8-d5, qd8xPd4, qd8-c7]",
+		"[e1d1, e1e2, e1e3, e1e4, e1f1, e1g1, e1h1, d3c3, d3b3, d3a3, d3d4, d3d5, d3e3, d3f3, d3d2, d3d1, a4a5, a4a6, a4a7, a4a8, a4b4, a4a3, a4a2, a4a1, c5b5, c5a5, c5c6, c5d5, c5c4, c5c3, c5c2, c5c1, b7a7, b7b8, b7b6, c7c8, c7d7, c7c6, e1d2, e1c3, e1b4, e1f2, e1g3, e1h4, d3c4, d3b5, d3a6, d3e4, d3c2, d3b1, d3e2, d3f1, a4b5, a4c6, a4b3, a4c2, a4d1, c5b6, c5d6, c5b4, c5d4, c5e3, c5f2, c5g1, b7a8, b7c8, b7a6, b7c6, c7b8, c7d8, c7b6, c7d6]",
+		"[d8c8, d8b8, d8d7, d8d6, d8d5, d8d4, d8c7]",
 	}
 
 	board := NewBoard()
@@ -164,8 +162,8 @@ func TestGenerateRookMoves(t *testing.T) {
 		"8/5k2/2p5/2R5/2p1b3/2K5/1r2R3/1R3n2 w - - 0 1",
 	}
 	results := []string{
-		"[Rh1-h2, Rh1-h3, Rh1-h4, Rh1-h5, Rh1-h6, Rh1xph7]",
-		"[Rb1-a1, Rb1xrb2, Rb1-c1, Rb1-d1, Rb1-e1, Rb1xnf1, Re2-d2, Re2-c2, Re2xrb2, Re2-e3, Re2xbe4, Re2-f2, Re2-g2, Re2-h2, Re2-e1, Rc5-b5, Rc5-a5, Rc5xpc6, Rc5-d5, Rc5-e5, Rc5-f5, Rc5-g5, Rc5-h5, Rc5xpc4]",
+		"[h1h2, h1h3, h1h4, h1h5, h1h6, h1h7]",
+		"[b1a1, b1b2, b1c1, b1d1, b1e1, b1f1, e2d2, e2c2, e2b2, e2e3, e2e4, e2f2, e2g2, e2h2, e2e1, c5b5, c5a5, c5c6, c5d5, c5e5, c5f5, c5g5, c5h5, c5c4]",
 	}
 
 	board := NewBoard()
@@ -189,7 +187,7 @@ func TestGenerateBishopMoves(t *testing.T) {
 	}
 	results := []string{
 		"[]",
-		"[Be3-d4, Be3xbc5, Be3-f4, Be3-g5, Be3-h6, Bc4-b5, Bc4-a6, Bc4-d5, Bc4xbe6, Bc4-b3]",
+		"[e3d4, e3c5, e3f4, e3g5, e3h6, c4b5, c4a6, c4d5, c4e6, c4b3]",
 	}
 
 	board := NewBoard()
@@ -213,9 +211,9 @@ func TestGenerateKnightMoves(t *testing.T) {
 		"r1bqk2r/pppp1pp1/2n2n1p/1B2p3/1b2P3/2NP1N2/PPP2PPP/R1BQK2R w KQkq - 2 6",
 	}
 	results := []string{
-		"[Nb1-a3, Nb1-c3, Ng1-f3, Ng1-h3]",
-		"[nf6-g8, nf6xPe4, nf6xPg4, nf6-d7, nf6-h5]",
-		"[Nf3xpe5, Nf3-g5, Nf3-g1, Nf3-d4, Nf3-d2, Nf3-h4]",
+		"[b1a3, b1c3, g1f3, g1h3]",
+		"[f6g8, f6e4, f6g4, f6d7, f6h5]",
+		"[f3e5, f3g5, f3g1, f3d4, f3d2, f3h4]",
 	}
 
 	board := NewBoard()
@@ -242,12 +240,12 @@ func TestGeneratePawnMoves(t *testing.T) {
 		"rnb1kb1r/ppppn1pp/4p3/2K1Ppq1/8/8/PPPP1PPP/RNBQ1BNR w kq f6 0 7",
 	}
 	results := []string{
-		"[Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pd2-d3, Pd2-d4, Pe2-e3, Pe2-e4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Ph2-h3, Ph2-h4]",
-		"[Pe5xpd6 e.p., Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Ph2-h3, Ph2-h4, Pd4xpc5, Pe5xnf6, Pe5-e6]",
-		"[Pe5xpf6 e.p., Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Pg7xbf8=Q, Pg7xbf8=R, Pg7xbf8=B, Pg7xbf8=N, Pg7xrh8=Q, Pg7xrh8=R, Pg7xrh8=B, Pg7xrh8=N]",
-		"[Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Pg7xbf8=Q, Pg7xbf8=R, Pg7xbf8=B, Pg7xbf8=N, Pg7xrh8=Q, Pg7xrh8=R, Pg7xrh8=B, Pg7xrh8=N, Pg7-g8=Q, Pg7-g8=R, Pg7-g8=B, Pg7-g8=N]",
-		"[pc4xPb3 e.p., ph2xNg1=q, ph2xNg1=r, ph2xNg1=b, ph2xNg1=n, ph2-h1=q, ph2-h1=r, ph2-h1=b, ph2-h1=n, pc4-c3, pc6-c5, pa7-a6, pa7-a5, ph7-h6, ph7-h5]",
-		"[Pa2-a3, Pa2-a4, Pb2-b3, Pb2-b4, Pc2-c3, Pc2-c4, Pd2-d3, Pd2-d4, Pf2-f3, Pf2-f4, Pg2-g3, Pg2-g4, Ph2-h3, Ph2-h4]",
+		"[a2a3, a2a4, b2b3, b2b4, c2c3, c2c4, d2d3, d2d4, e2e3, e2e4, f2f3, f2f4, g2g3, g2g4, h2h3, h2h4]",
+		"[e5d6, a2a3, a2a4, b2b3, b2b4, c2c3, c2c4, f2f3, f2f4, g2g3, g2g4, h2h3, h2h4, d4c5, e5f6, e5e6]",
+		"[e5f6, a2a3, a2a4, b2b3, b2b4, c2c3, c2c4, f2f3, f2f4, g2g3, g2g4, g7f8q, g7f8r, g7f8b, g7f8n, g7h8q, g7h8r, g7h8b, g7h8n]",
+		"[a2a3, a2a4, b2b3, b2b4, c2c3, c2c4, f2f3, f2f4, g2g3, g2g4, g7f8q, g7f8r, g7f8b, g7f8n, g7h8q, g7h8r, g7h8b, g7h8n, g7g8q, g7g8r, g7g8b, g7g8n]",
+		"[c4b3, h2g1q, h2g1r, h2g1b, h2g1n, h2h1q, h2h1r, h2h1b, h2h1n, c4c3, c6c5, a7a6, a7a5, h7h6, h7h5]",
+		"[a2a3, a2a4, b2b3, b2b4, c2c3, c2c4, d2d3, d2d4, f2f3, f2f4, g2g3, g2g4, h2h3, h2h4]",
 	}
 
 	board := NewBoard()

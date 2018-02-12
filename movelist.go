@@ -9,19 +9,19 @@ const (
 
 type MoveList struct {
 	Size  uint16
-	Moves [256]Move
+	Moves [256]BitMove
 }
 
 func (ml *MoveList) Clear() {
 	ml.Size = 0
 }
 
-func (ml *MoveList) Put(m Move) {
+func (ml *MoveList) Put(m BitMove) {
 	ml.Moves[ml.Size] = m
 	ml.Size++
 }
 
-func (ml *MoveList) Get(n uint16) Move {
+func (ml *MoveList) Get(n uint16) BitMove {
 	return ml.Moves[n]
 }
 
@@ -29,7 +29,7 @@ func (ml *MoveList) String() string {
 	last := ml.Size - 1
 	str := "["
 	for i := uint16(0); i < ml.Size; i++ {
-		str += ml.Moves[i].String()
+		str += ml.Moves[i].MiniNotation()
 		if i < last {
 			str += ", "
 		}

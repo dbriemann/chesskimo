@@ -77,14 +77,16 @@ var (
 	PAWN_BASE_RANK    = [2]Square{6, 1}
 	PAWN_PROMOTE_RANK = [2]Square{0, 7}
 
-	KNIGHT_DIRS         = [8]int8{UP + UP_LEFT, UP + UP_RIGHT, DOWN + DOWN_LEFT, DOWN + DOWN_RIGHT, LEFT + UP_LEFT, LEFT + DOWN_LEFT, RIGHT + UP_RIGHT, RIGHT + DOWN_RIGHT}
-	DIAGONAL_DIRS       = [4]int8{UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT}
-	ORTHOGONAL_DIRS     = [4]int8{LEFT, UP, RIGHT, DOWN}
-	KING_DIRS           = [8]int8{RIGHT, LEFT, UP, DOWN, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT}
-	CASTLING_PATH_SHORT = [2][2]Square{{0x75, 0x76}, {0x5, 0x6}}
-	CASTLING_PATH_LONG  = [2][3]Square{{0x73, 0x72, 0x71}, {0x3, 0x2, 0x1}}
-	CASTLING_ROOK_SHORT = [2]Square{0x77, 0x07}
-	CASTLING_ROOK_LONG  = [2]Square{0x70, 0x00}
+	KNIGHT_DIRS           = [8]int8{UP + UP_LEFT, UP + UP_RIGHT, DOWN + DOWN_LEFT, DOWN + DOWN_RIGHT, LEFT + UP_LEFT, LEFT + DOWN_LEFT, RIGHT + UP_RIGHT, RIGHT + DOWN_RIGHT}
+	DIAGONAL_DIRS         = [4]int8{UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT}
+	ORTHOGONAL_DIRS       = [4]int8{LEFT, UP, RIGHT, DOWN}
+	KING_DIRS             = [8]int8{RIGHT, LEFT, UP, DOWN, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT}
+	CASTLING_PATH_SHORT   = [2][2]Square{{0x75, 0x76}, {0x5, 0x6}}
+	CASTLING_PATH_LONG    = [2][3]Square{{0x73, 0x72, 0x71}, {0x3, 0x2, 0x1}}
+	CASTLING_ROOK_SHORT   = [2]Square{0x77, 0x07}
+	CASTLING_ROOK_LONG    = [2]Square{0x70, 0x00}
+	CASTLING_DETECT_SHORT = [2][2]Square{{0x74, 0x76}, {0x04, 0x06}} // FROM->TO squares
+	CASTLING_DETECT_LONG  = [2][2]Square{{0x74, 0x72}, {0x04, 0x02}} // FROM->TO squares
 
 	INFO_BOARD_INDEXES = [64]Square{
 		0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
@@ -190,4 +192,15 @@ func (sq Square) ToInfoIndex() Square {
 
 func (sq Square) Diff(sq2 Square) Square {
 	return Square(0x77 + (int8(sq) - int8(sq2)))
+}
+
+func (sq Square) CreatesEnPassent(sq2 Square) bool {
+	fromRank, toRank := sq.Rank(), sq2.Rank()
+
+	if toRank > fromRank {
+		fromRank, toRank = toRank, fromRank
+	}
+	//	fmt.Println("FROM", from, "TO", to, )
+
+	return (fromRank - toRank) == 2
 }

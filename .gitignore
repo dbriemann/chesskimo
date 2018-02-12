@@ -26,6 +26,8 @@ _testmain.go
 ### manual ignores
 /chesskimo
 /bench
+/cmd/bench/bench
+/cmd/chesskimo/chesskimo
 cover.out
 .idea
 prof.out
