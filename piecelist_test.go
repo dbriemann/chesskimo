@@ -9,10 +9,10 @@ func TestPieceList(t *testing.T) {
 	// TODO - currently we iterate and test all items. When OTB is removed from list
 	// -> only test 'Size' items.
 
-	result0 := [10]Square{OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB}
-	result1 := [10]Square{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-	result2 := [10]Square{9, 1, 2, 3, 4, 5, 6, 7, 8, OTB}
-	result3 := [10]Square{9, 1, 2, 3, 8, 5, 6, 7, OTB, OTB}
+	result0 := [16]Square{OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB}
+	result1 := [16]Square{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, OTB, OTB, OTB, OTB, OTB, OTB}
+	result2 := [16]Square{9, 1, 2, 3, 4, 5, 6, 7, 8, OTB, OTB, OTB, OTB, OTB, OTB, OTB}
+	result3 := [16]Square{9, 1, 2, 3, 8, 5, 6, 7, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB}
 
 	pl := NewPieceList()
 	// Test basic list.
@@ -28,9 +28,9 @@ func TestPieceList(t *testing.T) {
 	}
 
 	// Test if all are there.
-	for i, p := range pl.Pieces {
-		if result1[i] != p {
-			t.Fatalf("PieceList content should be %d, but is %d", result1[i], p)
+	for i := uint8(0); i < pl.Size; i++ {
+		if result1[i] != pl.Pieces[i] {
+			t.Fatalf("PieceList content should be %d, but is %d", result1[i], pl.Pieces[i])
 		}
 	}
 
@@ -48,9 +48,9 @@ func TestPieceList(t *testing.T) {
 	}
 
 	// Test if all remaining are there and correctly ordered.
-	for i, p := range pl.Pieces {
-		if result2[i] != p {
-			t.Fatalf("PieceList content should be %d, but is %d", result2[i], p)
+	for i := uint8(0); i < pl.Size; i++ {
+		if result2[i] != pl.Pieces[i] {
+			t.Fatalf("PieceList content should be %d, but is %d", result2[i], pl.Pieces[i])
 		}
 	}
 
@@ -63,9 +63,9 @@ func TestPieceList(t *testing.T) {
 	}
 
 	// Test if all remaining are there and correctly ordered.
-	for i, p := range pl.Pieces {
-		if result3[i] != p {
-			t.Fatalf("PieceList content should be %d, but is %d", result3[i], p)
+	for i := uint8(0); i < pl.Size; i++ {
+		if result3[i] != pl.Pieces[i] {
+			t.Fatalf("PieceList content should be %d, but is %d", result3[i], pl.Pieces[i])
 		}
 	}
 
@@ -78,9 +78,9 @@ func TestPieceList(t *testing.T) {
 	}
 
 	// Test if all remaining are there and correctly ordered.
-	for i, p := range pl.Pieces {
-		if result0[i] != p {
-			t.Fatalf("PieceList content should be %d, but is %d", result0[i], p)
+	for i := uint8(0); i < pl.Size; i++ {
+		if result0[i] != pl.Pieces[i] {
+			t.Fatalf("PieceList content should be %d, but is %d", result0[i], pl.Pieces[i])
 		}
 	}
 

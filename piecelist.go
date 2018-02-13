@@ -1,18 +1,18 @@
 package chesskimo
 
-// PieceList holds squares for all equal piece types of a single color.
-// The size is the maximum of occurences. Some pieces can only occur
-// less often but we use 10 as maximum for all types (and waste a few
-// bytes), so we have a consistent memory usage.
+// PieceList holds squares for a specific set of pieces. This could be all white bishops
+// or all black sliders. The maximum size of 16 allows to even hold all pieces of one color.
+// This may be a 'waste' of memory in most cases but should be more efficient than allocating
+// memory dynamically.
 type PieceList struct {
 	Size   uint8
-	Pieces [10]Square
+	Pieces [16]Square
 }
 
 func NewPieceList() PieceList {
 	p := PieceList{
 		Size:   0,
-		Pieces: [10]Square{OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB},
+		Pieces: [16]Square{OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB},
 	}
 	return p
 }
@@ -39,7 +39,6 @@ func (p *PieceList) Remove(sq Square) {
 }
 
 func (p *PieceList) RemoveIdx(idx uint8) {
-	p.Pieces[idx] = OTB // TODO remove, currently kept for testing
 	p.Size--
 	// If the deleted element is not the last, swap it with the last one.
 	if idx < p.Size {
@@ -48,10 +47,5 @@ func (p *PieceList) RemoveIdx(idx uint8) {
 }
 
 func (p *PieceList) Clear() {
-	// TODO remove OTB stuff.
-	for i := 0; i < 10; i++ {
-		p.Pieces[i] = OTB
-	}
-
 	p.Size = 0
 }
