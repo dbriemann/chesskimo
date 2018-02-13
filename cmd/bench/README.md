@@ -7,7 +7,7 @@ fen,depth,nodes,seconds,nps
 "n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1",6,71179139,10.871198,6547497.214221  
 "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",5,15833292,10.948244,1446194.663653  
 "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0",7,178633661,11.026783,16199980.036498  
-**Average10527192.861449**
+**Average NPS: 10527192.861449**
 
 ## v0.0.2
 fen,depth,nodes,seconds,nps
@@ -16,7 +16,7 @@ fen,depth,nodes,seconds,nps
 "n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1",6,71179139,8.600498,8276164.786479  
 "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",5,15833292,8.837269,1791649.917021  
 "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0",7,178633661,8.752704,20408969.015157  
-**Average13323544.387253**
+**Average NPS: 13323544.387253**
 
 ## v0.0.3
 fen,depth,nodes,seconds,nps
@@ -25,7 +25,7 @@ fen,depth,nodes,seconds,nps
 "n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1",6,71179139,6.041876,11780966.263972  
 "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",5,15833292,5.978960,2648168.084300  
 "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0",7,178633661,6.014141,29702273.075589  
-**Average19340982.271588**
+**Average NPS: 19340982.271588**
 
 ## v0.0.4 
 fen,depth,nodes,seconds,nps
@@ -34,4 +34,4 @@ fen,depth,nodes,seconds,nps
 "n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1",6,71179139,3.299669,21571600.548468  
 "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",5,15833292,3.305607,4789829.062857  
 "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0",7,178633661,3.322555,53763944.045329  
-**Average34923633.144043**
+**Average NPS: 34923633.144043**

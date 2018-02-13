@@ -49,3 +49,41 @@ func (p *PieceList) RemoveIdx(idx uint8) {
 func (p *PieceList) Clear() {
 	p.Size = 0
 }
+
+// SliderPieceList is a piece list for all types of sliders:
+// queens, rooks, bishops.
+//type SliderPieceList struct {
+//	QueensSize  uint8
+//	BishopsSize uint8
+//	RooksSize   uint8
+
+//	pieces [30]Square
+//}
+
+//const (
+//	rookOffset   = 10
+//	bishopOffset = 20
+//)
+
+//func NewSliderPieceList() SliderPieceList {
+//	p := SliderPieceList{
+//		QueensSize:  0,
+//		RooksSize:   0,
+//		BishopsSize: 0,
+//		pieces: [30]Square{OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB,
+//			OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB, OTB},
+//	}
+//	return p
+//}
+
+//func (sl *SliderPieceList) GetQueen(n uint8) Square {
+//	return sl.pieces[n]
+//}
+
+//func (sl *SliderPieceList) GetRook(n uint8) Square {
+//	return sl.pieces[n+rookOffset]
+//}
+
+//func (sl *SliderPieceList) GetBishop(n uint8) Square {
+//	return sl.pieces[n+bishopOffset]
+//}

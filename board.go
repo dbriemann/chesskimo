@@ -31,6 +31,7 @@ type Board struct {
 	EpSquare    Square
 	Player      Color
 	Kings       [2]Square
+	Sliders     [2]PieceList
 	Queens      [2]PieceList
 	Rooks       [2]PieceList
 	Bishops     [2]PieceList
@@ -144,6 +145,7 @@ func populateDiffMaps() {
 func NewBoard() Board {
 	b := Board{}
 	b.Kings = [2]Square{OTB, OTB}
+	b.Sliders = [2]PieceList{NewPieceList()}
 	b.Queens = [2]PieceList{NewPieceList()}
 	b.Rooks = [2]PieceList{NewPieceList()}
 	b.Bishops = [2]PieceList{NewPieceList()}
@@ -172,12 +174,13 @@ func (b *Board) SetFEN(fenstr string) error {
 		panic(err)
 	}
 
-	for col := BLACK; col <= WHITE; col++ {
-		b.Queens[col].Clear()
-		b.Rooks[col].Clear()
-		b.Bishops[col].Clear()
-		b.Knights[col].Clear()
-		b.Pawns[col].Clear()
+	for color := BLACK; color <= WHITE; color++ {
+		b.Sliders[color].Clear()
+		b.Queens[color].Clear()
+		b.Rooks[color].Clear()
+		b.Bishops[color].Clear()
+		b.Knights[color].Clear()
+		b.Pawns[color].Clear()
 	}
 
 	// No error encountered -> set all members of the board instance.
@@ -196,6 +199,7 @@ func (b *Board) SetFEN(fenstr string) error {
 	for idx, piece := range mb.Squares {
 		sq := Lookup0x88[idx]
 		b.Squares[sq] = piece
+
 		switch piece {
 		case WKING:
 			b.Kings[WHITE] = sq
@@ -203,16 +207,22 @@ func (b *Board) SetFEN(fenstr string) error {
 			b.Kings[BLACK] = sq
 		case WQUEEN:
 			b.Queens[WHITE].Add(sq)
+			b.Sliders[WHITE].Add(sq)
 		case BQUEEN:
 			b.Queens[BLACK].Add(sq)
+			b.Sliders[BLACK].Add(sq)
 		case WROOK:
 			b.Rooks[WHITE].Add(sq)
+			b.Sliders[WHITE].Add(sq)
 		case BROOK:
 			b.Rooks[BLACK].Add(sq)
+			b.Sliders[BLACK].Add(sq)
 		case WBISHOP:
 			b.Bishops[WHITE].Add(sq)
+			b.Sliders[WHITE].Add(sq)
 		case BBISHOP:
 			b.Bishops[BLACK].Add(sq)
+			b.Sliders[BLACK].Add(sq)
 		case WKNIGHT:
 			b.Knights[WHITE].Add(sq)
 		case BKNIGHT:
@@ -230,9 +240,11 @@ func (b *Board) SetFEN(fenstr string) error {
 	return nil
 }
 
-func (b *Board) clearInfoBoard() {
+func (b *Board) clearMetaInfo() {
 	b.CheckInfo = CHECK_NONE
-	for _, idx := range INFO_BOARD_INDEXES {
+	//	for idx := 0x8; idx < 128; idx = (i + 1) | 0x8 { // This is slower than lookup..
+	for i := 0; i < 64; i++ {
+		idx := META_BOARD_INDEXES[i]
 		b.Squares[idx] = INFO_NONE
 	}
 }
@@ -283,6 +295,7 @@ func (b *Board) MakeLegalMove(m BitMove) {
 		b.Knights[b.Player].Move(from, to)
 	case BISHOP:
 		b.Bishops[b.Player].Move(from, to)
+		b.Sliders[b.Player].Move(from, to)
 	case ROOK:
 		if from == CASTLING_ROOK_SHORT[b.Player] {
 			b.CastleShort[b.Player] = false
@@ -290,8 +303,10 @@ func (b *Board) MakeLegalMove(m BitMove) {
 			b.CastleLong[b.Player] = false
 		}
 		b.Rooks[b.Player].Move(from, to)
+		b.Sliders[b.Player].Move(from, to)
 	case QUEEN:
 		b.Queens[b.Player].Move(from, to)
+		b.Sliders[b.Player].Move(from, to)
 	case KING:
 		b.Kings[b.Player] = to
 		b.CastleShort[b.Player] = false
@@ -305,11 +320,13 @@ func (b *Board) MakeLegalMove(m BitMove) {
 			rookTo := CASTLING_PATH_SHORT[b.Player][0]
 			b.Squares[rookTo], b.Squares[rookFrom] = ROOK|b.Player, EMPTY
 			b.Rooks[b.Player].Move(rookFrom, rookTo)
+			b.Sliders[b.Player].Move(rookFrom, rookTo)
 		} else if longCastle {
 			rookFrom := CASTLING_ROOK_LONG[b.Player]
 			rookTo := CASTLING_PATH_LONG[b.Player][0]
 			b.Squares[rookTo], b.Squares[rookFrom] = ROOK|b.Player, EMPTY
 			b.Rooks[b.Player].Move(rookFrom, rookTo)
+			b.Sliders[b.Player].Move(rookFrom, rookTo)
 		}
 
 	default:
@@ -321,6 +338,8 @@ func (b *Board) MakeLegalMove(m BitMove) {
 	b.MoveNumber++
 	// TODO half draw counter
 }
+
+// TODO (improvement) -> introduce movePiece function..
 
 func (b *Board) addPiece(sq Square, piece Piece) {
 	b.Squares[sq] = piece
@@ -334,10 +353,13 @@ func (b *Board) addPiece(sq Square, piece Piece) {
 		b.Knights[color].Add(sq)
 	case BISHOP:
 		b.Bishops[color].Add(sq)
+		b.Sliders[color].Add(sq)
 	case ROOK:
 		b.Rooks[color].Add(sq)
+		b.Sliders[color].Add(sq)
 	case QUEEN:
 		b.Queens[color].Add(sq)
+		b.Sliders[color].Add(sq)
 	default:
 		// This should not happen..
 		panic("Board.addPiece: " + fmt.Sprintf("%s %s", PrintBoardIndex[sq], PrintMap[piece]))
@@ -357,10 +379,13 @@ func (b *Board) removePiece(sq Square) {
 		b.Knights[color].Remove(sq)
 	case BISHOP:
 		b.Bishops[color].Remove(sq)
+		b.Sliders[color].Remove(sq)
 	case ROOK:
 		b.Rooks[color].Remove(sq)
+		b.Sliders[color].Remove(sq)
 	case QUEEN:
 		b.Queens[color].Remove(sq)
+		b.Sliders[color].Remove(sq)
 	default:
 		// This should not happen..
 		panic("Board.removePiece: " + fmt.Sprintf("%s %s", PrintBoardIndex[sq], PrintMap[piece]))
@@ -384,24 +409,31 @@ func (b *Board) IsSquareAttacked(sq, ignoreSq Square, color Color) bool {
 	}
 
 	// 3. Detect attacks by sliders.
-	if b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Queens[oppColor], QUEEN) {
+	if b.IsSqAttackedBySlider(color, sq, ignoreSq) {
 		return true
 	}
-	if b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Bishops[oppColor], BISHOP) {
-		return true
-	}
-	if b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Rooks[oppColor], ROOK) {
-		return true
-	}
+	//	if b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Queens[oppColor], QUEEN) {
+	//		return true
+	//	}
+	//	if b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Bishops[oppColor], BISHOP) {
+	//		return true
+	//	}
+	//	if b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Rooks[oppColor], ROOK) {
+	//		return true
+	//	}
 
 	// 2. Detect attacks by pawns.
 	oppPawn := PAWN | oppColor
-	for _, dir := range PAWN_CAPTURE_DIRS[color] {
-		maybePawnSq := Square(int8(sq) + dir)
-		if maybePawnSq.OnBoard() && b.Squares[maybePawnSq] == oppPawn {
-			// Found an attacking pawn by inspecting in reverse direction.
-			return true
-		}
+
+	maybePawnSq := Square(int8(sq) + PAWN_CAPTURE_DIRS[color][0])
+	if maybePawnSq.OnBoard() && b.Squares[maybePawnSq] == oppPawn {
+		// Found an attacking pawn by inspecting in reverse direction.
+		return true
+	}
+	maybePawnSq = Square(int8(sq) + PAWN_CAPTURE_DIRS[color][1])
+	if maybePawnSq.OnBoard() && b.Squares[maybePawnSq] == oppPawn {
+		// Found an attacking pawn by inspecting in reverse direction.
+		return true
 	}
 
 	// 0. Detect attacks by kings.
@@ -415,9 +447,11 @@ func (b *Board) IsSquareAttacked(sq, ignoreSq Square, color Color) bool {
 }
 
 // IsSqAttackedBySlider tests if a specific square is attacked by an enemy slider.
-func (b *Board) IsSqAttackedBySlider(color Color, sq, ignoreSq Square, pieceList *PieceList, ptype Piece) bool {
-	for i := uint8(0); i < pieceList.Size; i++ {
-		sliderSq := pieceList.Pieces[i]
+func (b *Board) IsSqAttackedBySlider(color Color, sq, ignoreSq Square) bool {
+	oppColor := color.Flip()
+	for i := uint8(0); i < b.Sliders[oppColor].Size; i++ {
+		sliderSq := b.Sliders[oppColor].Pieces[i]
+		ptype := b.Squares[sliderSq] & PIECE_MASK
 		if sliderSq == ignoreSq {
 			// This only evals to true in pawn move legality tests.
 			// If the pawn captured a piece this piece is still in the piece list
@@ -452,7 +486,7 @@ func (b *Board) IsSqAttackedBySlider(color Color, sq, ignoreSq Square, pieceList
 }
 
 func (b *Board) DetectChecksAndPins(color Color) {
-	b.clearInfoBoard()
+	b.clearMetaInfo()
 	oppColor := color.Flip()
 
 	kingSq := b.Kings[color]
@@ -472,11 +506,29 @@ func (b *Board) DetectChecksAndPins(color Color) {
 			break
 		}
 	}
+	//	for i := uint8(0); i < b.Knights[oppColor].Size; i++ {
+	//		from := b.Knights[oppColor].Pieces[i]
+	//		for d := 0; d < 8; d++ {
+	//			dir := KNIGHT_DIRS[d]
+	//			to := Square(int8(from) + dir)
+	//			if to.OnBoard() {
+	//				if to == kingSq {
+	//					b.CheckInfo = to
+	//					checkCounter++
+	//					b.Squares[to.ToInfoIndex()] = INFO_CHECK
+	//				} else {
+	//					b.Squares[to.ToInfoIndex()] = INFO_ATTACKED
+	//				}
+	//			}
+	//		}
+	//	}
 
 	// 2. Detect checks by pawns.
 	for i := uint8(0); i < b.Pawns[oppColor].Size; i++ {
 		pawnSq := b.Pawns[oppColor].Pieces[i]
-		for _, dir := range PAWN_CAPTURE_DIRS[oppColor] {
+		//		for _, dir := range PAWN_CAPTURE_DIRS[oppColor] {
+		for d := 0; d < 2; d++ {
+			dir := PAWN_CAPTURE_DIRS[oppColor][d]
 			to := Square(int8(pawnSq) + dir)
 			if kingSq == to {
 				// The pawn checks the king. Save the info and break the loop.
@@ -541,9 +593,9 @@ func (b *Board) DetectSliderChecksAndPins(color Color, pmarker *Info, ccount int
 					continue
 				} else if curPiece.HasColor(color) {
 					// A friendly piece was encountered
-					if info == INFO_NONE {
+					if info <= INFO_ATTACKED {
 						// This is the first piece on the path -> mark it as attacked.
-						info = INFO_ATTACKED
+						info = INFO_PIN_ATTACKED
 					} else {
 						// We already marked a piece on this path before -> there cannot be a pin anymore.
 						// (There is an exception for EP capture but those are handled elsewhere.
@@ -646,7 +698,10 @@ func (b *Board) GeneratePawnMoves(mlist *MoveList, color Color) {
 		to = b.EpSquare
 		// We use the 'wrong' color to find e.p. captures
 		// by searching in the opposite direction.
-		for _, dir := range PAWN_CAPTURE_DIRS[oppColor] {
+		//		for _, dir := range PAWN_CAPTURE_DIRS[oppColor] {
+		for d := 0; d < 2; d++ {
+			dir := PAWN_CAPTURE_DIRS[oppColor][d]
+
 			from = Square(int8(to) + dir)
 			tpiece = b.Squares[from]
 			if from.OnBoard() && tpiece == PAWN|color {
@@ -663,7 +718,9 @@ func (b *Board) GeneratePawnMoves(mlist *MoveList, color Color) {
 		from = b.Pawns[color].Pieces[i]
 
 		// a. Captures
-		for _, capdir := range PAWN_CAPTURE_DIRS[color] {
+		//		for _, capdir := range PAWN_CAPTURE_DIRS[color] {
+		for d := 0; d < 2; d++ {
+			capdir := PAWN_CAPTURE_DIRS[color][d]
 			to = Square(int8(from) + capdir)
 			// If the target square is on board and has the opponent's color
 			// the capture is possible.
@@ -741,12 +798,14 @@ func (b *Board) newPawnMoveIfLegal(color Color, from, to Square, ptype, capPiece
 			// Check and move doesn't change that.
 			return BitMove(0), false
 		} else {
+			//			fmt.Println("PAWN MOVE", PrintBoardIndex[from], "->", PrintBoardIndex[to])
 			return NewBitMove(from, to, promtype), true
 		}
 	}
 
 	legal := b.tryPawnMoveLegality(from, to, capSq, capPiece, color)
 	if legal {
+		//		fmt.Println("PAWN MOVE", PrintBoardIndex[from], "->", PrintBoardIndex[to])
 		return NewBitMove(from, to, promtype), true
 	} else {
 		return BitMove(0), false
@@ -799,7 +858,9 @@ func (b *Board) GenerateKnightMoves(mlist *MoveList, color Color) {
 		}
 
 		// Try all possible directions for a knight.
-		for _, dir := range KNIGHT_DIRS {
+		//		for _, dir := range KNIGHT_DIRS {
+		for d := 0; d < 8; d++ {
+			dir := KNIGHT_DIRS[d]
 			to = Square(int8(from) + dir)
 			if to.OnBoard() {
 				tpiece = b.Squares[to]
@@ -826,14 +887,19 @@ func (b *Board) GenerateKingMoves(mlist *MoveList, color Color) {
 	// Define all possible target squares for the king to move to and add all legal normal moves.
 	targets := [8]bool{}
 
-	for i, dir := range KING_DIRS {
+	//	for i, dir := range KING_DIRS {
+	for i := 0; i < 8; i++ {
+		dir := KING_DIRS[i]
 		to = Square(int8(from) + dir)
 		if to.OnBoard() {
+			tpiece = b.Squares[to]
+			if tpiece.HasColor(color) {
+				continue
+			}
 			if b.IsSquareAttacked(to, OTB, color) {
 				continue
 			}
 			targets[i] = true
-			tpiece = b.Squares[to]
 			if b.Squares[to.ToInfoIndex()] != INFO_FORBIDDEN_ESCAPE {
 				if !tpiece.HasColor(color) {
 					// Add a normal or capture move.
@@ -894,12 +960,40 @@ func (b *Board) GenerateKingMoves(mlist *MoveList, color Color) {
 // and stores them in the given MoveList.
 func (b *Board) GenerateBishopMoves(mlist *MoveList, color Color) {
 	b.GenerateSlidingMoves(mlist, color, BISHOP, DIAGONAL_DIRS, &b.Bishops[color])
+	//	from := OTB
+	//	isCheck := b.CheckInfo.OnBoard()
+	//	oppColor := color.Flip()
+
+	//	// Iterate all bishop pieces.
+	//	for i := uint8(0); i < b.Bishops[color].Size; i++ {
+	//		from = b.Bishops[color].Pieces[i]
+	//		isPinned := (b.Squares[from.ToInfoIndex()] >= INFO_PIN)
+
+	//		// For every direction a bishop can go..
+	//		for _, dir := range DIAGONAL_DIRS {
+	//			b.generateInnerSlides(mlist, from, dir, isPinned, isCheck, color, oppColor)
+	//		}
+	//	}
 }
 
 // GenerateRookMoves generates all legal rook moves for the given color
 // and stores them in the given MoveList.
 func (b *Board) GenerateRookMoves(mlist *MoveList, color Color) {
 	b.GenerateSlidingMoves(mlist, color, ROOK, ORTHOGONAL_DIRS, &b.Rooks[color])
+	//	from := OTB
+	//	isCheck := b.CheckInfo.OnBoard()
+	//	oppColor := color.Flip()
+
+	//	// Iterate all rook pieces.
+	//	for i := uint8(0); i < b.Rooks[color].Size; i++ {
+	//		from = b.Rooks[color].Pieces[i]
+	//		isPinned := (b.Squares[from.ToInfoIndex()] >= INFO_PIN)
+
+	//		// For every direction a rook can go..
+	//		for _, dir := range ORTHOGONAL_DIRS {
+	//			b.generateInnerSlides(mlist, from, dir, isPinned, isCheck, color, oppColor)
+	//		}
+	//	}
 }
 
 // GenerateQueenMoves generates all legal rook moves for the given color
@@ -907,7 +1001,63 @@ func (b *Board) GenerateRookMoves(mlist *MoveList, color Color) {
 func (b *Board) GenerateQueenMoves(mlist *MoveList, color Color) {
 	b.GenerateSlidingMoves(mlist, color, QUEEN, ORTHOGONAL_DIRS, &b.Queens[color])
 	b.GenerateSlidingMoves(mlist, color, QUEEN, DIAGONAL_DIRS, &b.Queens[color])
+	//	from := OTB
+	//	isCheck := b.CheckInfo.OnBoard()
+	//	oppColor := color.Flip()
+
+	//	// Iterate all queen pieces.
+	//	for i := uint8(0); i < b.Queens[color].Size; i++ {
+	//		from = b.Queens[color].Pieces[i]
+	//		isPinned := (b.Squares[from.ToInfoIndex()] >= INFO_PIN)
+
+	//		// For every direction a queen can go..
+	//		for _, dir := range KING_DIRS {
+	//			b.generateInnerSlides(mlist, from, dir, isPinned, isCheck, color, oppColor)
+	//		}
+	//	}
 }
+
+//func (b *Board) generateInnerSlides(mlist *MoveList, from Square, dir int8, isPinned, isCheck bool, color, oppColor Color) {
+//	// -> repeat until a stop condition occurs.
+//	for steps := int8(1); ; steps++ {
+//		to := Square(int8(from) + dir*steps)
+
+//		if !to.OnBoard() {
+//			// Target is an illegal square -> next direction.
+//			break
+//		} else if isPinned && b.Squares[to.ToInfoIndex()] != b.Squares[from.ToInfoIndex()] {
+//			// Piece is pinned but target is not on pin path -> next direction.
+//			break
+//		} else if isCheck && b.Squares[to.ToInfoIndex()] != INFO_CHECK {
+//			tpiece := b.Squares[to]
+//			if !tpiece.IsEmpty() {
+//				// King is in check but the move does not capture the checker
+//				// nor does it block the check -> skip direction.
+//				break
+//			}
+//		} else {
+//			tpiece := b.Squares[to]
+//			if tpiece.HasColor(color) {
+//				// Target is blocked by own piece -> next direction.
+//				break
+//			} else {
+//				if tpiece.IsEmpty() {
+//					// Add a normal move.
+//					move := NewBitMove(from, to, NONE)
+//					mlist.Put(move)
+//					// And continue in current direction.
+//				} else if tpiece.HasColor(oppColor) {
+//					// Add a capture move.
+//					move := NewBitMove(from, to, NONE)
+//					mlist.Put(move)
+//					// And go to next direction.
+//					break
+//				}
+//			}
+//		}
+
+//	}
+//}
 
 // GenerateSlidingMoves generates all legal sliding moves for the given color
 // and stores them in the given MoveList. This can be diagonal or orthogonal moves.
@@ -926,7 +1076,9 @@ func (b *Board) GenerateSlidingMoves(mlist *MoveList, color Color, ptype Piece, 
 		isPinned := (b.Squares[from.ToInfoIndex()] >= INFO_PIN)
 
 		// For every direction a slider can go..
-		for _, dir := range dirs {
+		//		for _, dir := range dirs {
+		for i := 0; i < 4; i++ {
+			dir := dirs[i]
 
 			// -> repeat until a stop condition occurs.
 			for steps := int8(1); ; steps++ {
@@ -965,7 +1117,6 @@ func (b *Board) GenerateSlidingMoves(mlist *MoveList, color Color, ptype Piece, 
 						}
 					}
 				}
-
 			}
 		}
 
