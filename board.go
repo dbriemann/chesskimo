@@ -242,11 +242,72 @@ func (b *Board) SetFEN(fenstr string) error {
 
 func (b *Board) clearMetaInfo() {
 	b.CheckInfo = CHECK_NONE
-	//	for idx := 0x8; idx < 128; idx = (i + 1) | 0x8 { // This is slower than lookup..
-	for i := 0; i < 64; i++ {
-		idx := META_BOARD_INDEXES[i]
-		b.Squares[idx] = INFO_NONE
-	}
+	// Manually unrolled loop. Ugly but MUCH faster than looping over the index lookup
+	// or counting up the right side board indexes with (i + 1) | 0x8.
+	b.Squares[0x8] = INFO_NONE
+	b.Squares[0x9] = INFO_NONE
+	b.Squares[0xa] = INFO_NONE
+	b.Squares[0xb] = INFO_NONE
+	b.Squares[0xc] = INFO_NONE
+	b.Squares[0xd] = INFO_NONE
+	b.Squares[0xe] = INFO_NONE
+	b.Squares[0xf] = INFO_NONE
+	b.Squares[0x18] = INFO_NONE
+	b.Squares[0x19] = INFO_NONE
+	b.Squares[0x1a] = INFO_NONE
+	b.Squares[0x1b] = INFO_NONE
+	b.Squares[0x1c] = INFO_NONE
+	b.Squares[0x1d] = INFO_NONE
+	b.Squares[0x1e] = INFO_NONE
+	b.Squares[0x1f] = INFO_NONE
+	b.Squares[0x28] = INFO_NONE
+	b.Squares[0x29] = INFO_NONE
+	b.Squares[0x2a] = INFO_NONE
+	b.Squares[0x2b] = INFO_NONE
+	b.Squares[0x2c] = INFO_NONE
+	b.Squares[0x2d] = INFO_NONE
+	b.Squares[0x2e] = INFO_NONE
+	b.Squares[0x2f] = INFO_NONE
+	b.Squares[0x38] = INFO_NONE
+	b.Squares[0x39] = INFO_NONE
+	b.Squares[0x3a] = INFO_NONE
+	b.Squares[0x3b] = INFO_NONE
+	b.Squares[0x3c] = INFO_NONE
+	b.Squares[0x3d] = INFO_NONE
+	b.Squares[0x3e] = INFO_NONE
+	b.Squares[0x3f] = INFO_NONE
+	b.Squares[0x48] = INFO_NONE
+	b.Squares[0x49] = INFO_NONE
+	b.Squares[0x4a] = INFO_NONE
+	b.Squares[0x4b] = INFO_NONE
+	b.Squares[0x4c] = INFO_NONE
+	b.Squares[0x4d] = INFO_NONE
+	b.Squares[0x4e] = INFO_NONE
+	b.Squares[0x4f] = INFO_NONE
+	b.Squares[0x58] = INFO_NONE
+	b.Squares[0x59] = INFO_NONE
+	b.Squares[0x5a] = INFO_NONE
+	b.Squares[0x5b] = INFO_NONE
+	b.Squares[0x5c] = INFO_NONE
+	b.Squares[0x5d] = INFO_NONE
+	b.Squares[0x5e] = INFO_NONE
+	b.Squares[0x5f] = INFO_NONE
+	b.Squares[0x68] = INFO_NONE
+	b.Squares[0x69] = INFO_NONE
+	b.Squares[0x6a] = INFO_NONE
+	b.Squares[0x6b] = INFO_NONE
+	b.Squares[0x6c] = INFO_NONE
+	b.Squares[0x6d] = INFO_NONE
+	b.Squares[0x6e] = INFO_NONE
+	b.Squares[0x6f] = INFO_NONE
+	b.Squares[0x78] = INFO_NONE
+	b.Squares[0x79] = INFO_NONE
+	b.Squares[0x7a] = INFO_NONE
+	b.Squares[0x7b] = INFO_NONE
+	b.Squares[0x7c] = INFO_NONE
+	b.Squares[0x7d] = INFO_NONE
+	b.Squares[0x7e] = INFO_NONE
+	b.Squares[0x7f] = INFO_NONE
 }
 
 // MakeLegalMove expects a legal move and applies it to the board.
