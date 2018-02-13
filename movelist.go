@@ -8,7 +8,7 @@ const (
 )
 
 type MoveList struct {
-	Size  uint16
+	Size  uint32
 	Moves [256]BitMove
 }
 
@@ -28,7 +28,7 @@ func (ml *MoveList) Get(n uint16) BitMove {
 func (ml *MoveList) String() string {
 	last := ml.Size - 1
 	str := "["
-	for i := uint16(0); i < ml.Size; i++ {
+	for i := uint32(0); i < ml.Size; i++ {
 		str += ml.Moves[i].MiniNotation()
 		if i < last {
 			str += ", "

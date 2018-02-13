@@ -986,7 +986,7 @@ func (b *Board) Perft(depth int) uint64 {
 		return uint64(mlist.Size)
 	}
 
-	for i := uint16(0); i < mlist.Size; i++ {
+	for i := uint32(0); i < mlist.Size; i++ {
 		move := &mlist.Moves[i]
 		b.MakeLegalMove(*move)
 		n := b.Perft(depth - 1)
@@ -1005,7 +1005,7 @@ func (b *Board) PerftDivide(depth int) map[string]uint64 {
 
 	b.GenerateAllLegalMoves(&mlist, b.Player)
 
-	for i := uint16(0); i < mlist.Size; i++ {
+	for i := uint32(0); i < mlist.Size; i++ {
 		move := &mlist.Moves[i]
 		b.MakeLegalMove(*move)
 		n := b.Perft(depth - 1)
