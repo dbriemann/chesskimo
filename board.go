@@ -371,23 +371,27 @@ func (b *Board) removePiece(sq Square) {
 func (b *Board) IsSquareAttacked(sq, ignoreSq Square, color Color) bool {
 	oppColor := color.Flip()
 
-	// 0. Detect attacks by kings.
-	oppKingSq := b.Kings[oppColor]
-	diff := oppKingSq.Diff(sq)
-	if SQUARE_DIFFS[diff].Contains(KING) {
-		return true
-	}
-
 	// 1. Detect attacks	by knights.
 	for i := uint8(0); i < b.Knights[oppColor].Size; i++ {
 		knightSq := b.Knights[oppColor].Pieces[i]
 		if knightSq == ignoreSq {
 			continue
 		}
-		diff = knightSq.Diff(sq)
+		diff := knightSq.Diff(sq)
 		if SQUARE_DIFFS[diff].Contains(KNIGHT) {
 			return true
 		}
+	}
+
+	// 3. Detect attacks by sliders.
+	if b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Queens[oppColor], QUEEN) {
+		return true
+	}
+	if b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Bishops[oppColor], BISHOP) {
+		return true
+	}
+	if b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Rooks[oppColor], ROOK) {
+		return true
 	}
 
 	// 2. Detect attacks by pawns.
@@ -400,10 +404,14 @@ func (b *Board) IsSquareAttacked(sq, ignoreSq Square, color Color) bool {
 		}
 	}
 
-	// 3. Detect attacks by sliders.
-	return b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Queens[oppColor], QUEEN) ||
-		b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Bishops[oppColor], BISHOP) ||
-		b.IsSqAttackedBySlider(color, sq, ignoreSq, &b.Rooks[oppColor], ROOK)
+	// 0. Detect attacks by kings.
+	oppKingSq := b.Kings[oppColor]
+	diff := oppKingSq.Diff(sq)
+	if SQUARE_DIFFS[diff].Contains(KING) {
+		return true
+	}
+
+	return false
 }
 
 // IsSqAttackedBySlider tests if a specific square is attacked by an enemy slider.
