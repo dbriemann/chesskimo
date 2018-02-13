@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/dbriemann/chesskimo"
 )
@@ -18,13 +19,13 @@ func main() {
 
 		//		"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", // 2. Good testposition -- tested and validated until depth 6
 
-		//		"n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", // 3. Discover promotion bugs -- tested and validated until depth 6
+		"n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", // 3. Discover promotion bugs -- tested and validated until depth 6
 
 		//		"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 0", // Kiwipete -- tested and validated until depth 5
 
 		//		"r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1", // Dense -- tested and validated until depth 5
 
-		"8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0", // Endgame
+		//		"8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0", // Endgame
 
 	}
 
@@ -35,7 +36,9 @@ func main() {
 		b.SetFEN(fen)
 		fmt.Println(&b)
 
-		result := b.PerftDivide(5)
+		start := time.Now()
+		result := b.PerftDivide(7)
+		end := time.Now()
 		total := uint64(0)
 
 		keys := make([]string, 0, len(result))
@@ -47,7 +50,10 @@ func main() {
 			fmt.Println(key, result[key])
 			total += result[key]
 		}
+		sec := end.Sub(start).Seconds()
 		fmt.Println("TOTAL", total)
+		fmt.Println("TIME:", sec, "sec")
+		fmt.Printf("NPS: %f\n", float64(total)/sec)
 
 		//		for i := 1; i <= 5; i++ {
 		//			//			start := time.Now()
