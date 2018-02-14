@@ -1146,7 +1146,7 @@ func (b *Board) GenerateSlidingMoves(mlist *MoveList, color Color, ptype Piece, 
 				to = Square(int8(from) + dir*steps)
 
 				if !to.OnBoard() {
-					// Target is an illegal square -> next direction.
+					// Target is out of board -> next direction.
 					break
 				} else if isPinned && b.Squares[to.ToInfoIndex()] != b.Squares[from.ToInfoIndex()] {
 					// Piece is pinned but target is not on pin path -> next direction.
@@ -1154,7 +1154,7 @@ func (b *Board) GenerateSlidingMoves(mlist *MoveList, color Color, ptype Piece, 
 				} else if isCheck && b.Squares[to.ToInfoIndex()] != INFO_CHECK {
 					tpiece = b.Squares[to]
 					if !tpiece.IsEmpty() {
-						// King is in check but the move does not capture the checker
+						// King is in check but the move does neither capture the checker
 						// nor does it block the check -> skip direction.
 						break
 					}
