@@ -171,7 +171,7 @@ func (b *Board) SetStartingPosition() {
 func (b *Board) SetFEN(fenstr string) error {
 	mb, err := ParseFEN(fenstr)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	for color := BLACK; color <= WHITE; color++ {

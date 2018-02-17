@@ -13,6 +13,8 @@ const (
 	// OTB is off the board and used as a non-index in piece lists.
 	OTB Square = 0x7F
 
+	//	NOT0x88 = ^7
+
 	// Colors:
 	// BLACK and WHITE are used for pieces, DARK and LIGHT are used for squares.
 	BLACK           Color = 0   // 00000000
@@ -204,4 +206,12 @@ func (sq Square) CreatesEnPassent(sq2 Square) bool {
 	//	fmt.Println("FROM", from, "TO", to, )
 
 	return (fromRank - toRank) == 2
+}
+
+func (sq Square) To0x88() Square {
+	return sq + (sq & ^Square(7))
+}
+
+func (sq Square) To8x8() Square {
+	return (sq + (sq & Square(7))) >> 1
 }
