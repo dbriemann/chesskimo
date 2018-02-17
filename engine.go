@@ -1,13 +1,20 @@
 package chesskimo
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"strings"
 )
 
 const (
 	ENGINE_STATE_IDLE = iota
 	ENGINE_STATE_QUIT
+)
+
+var (
+	// ErrInvalidMoveNotation that a move is not in the correct notation
+	ErrInvalidMoveNotation = errors.New("Move has bad notation formatting")
 )
 
 type Engine struct {
@@ -21,6 +28,8 @@ type Engine struct {
 	//	waitgroup   sync.WaitGroup
 
 	board Board
+
+	logger *log.Logger
 }
 
 func NewEngine(name, author string, protocol Protocol) *Engine {
@@ -29,6 +38,7 @@ func NewEngine(name, author string, protocol Protocol) *Engine {
 		author:   author,
 		protocol: protocol,
 		board:    NewBoard(),
+		logger:   log.New(),
 	}
 
 	return e
@@ -44,20 +54,26 @@ func (e *Engine) Quit() {
 	// TODO wait for search..
 }
 
-func (e *Engine) MakeMove(move string) {
+func (e *Engine) GetLegalMoves() MoveList {
+	ml := MoveList{}
+	e.board.GenerateAllLegalMoves(&ml)
+	return ml
+}
+
+func (e *Engine) MakeMove(move string) error {
 	if len(move) >= 4 {
 		promo := NONE
 
 		fmt.Println(move[0:2])
 		from, err := parseFENSquare(move[0:2])
 		if err != nil {
-			return
+			return ErrInvalidMoveNotation
 		}
 
 		fmt.Println(move[2:4])
 		to, err := parseFENSquare(move[2:4])
 		if err != nil {
-			return
+			return ErrInvalidMoveNotation
 		}
 
 		if len(move) == 5 {
@@ -70,13 +86,19 @@ func (e *Engine) MakeMove(move string) {
 				promo = BISHOP
 			case "n":
 				promo = KNIGHT
+			default:
+				// Impossible promotion.
+				return ErrInvalidMoveNotation
 			}
 		}
 		from = from.To0x88()
 		to = to.To0x88()
-		fmt.Println("FROMTO", from, to, promo)
 		bm := NewBitMove(from, to, promo)
-		fmt.Println("MINI", bm.MiniNotation())
+
+		// TODO - test if move is really legal?
+
+		e.board.MakeLegalMove(bm)
 	}
 
+	return nil
 }

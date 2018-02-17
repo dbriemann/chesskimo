@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"strings"
 )
@@ -39,12 +40,47 @@ func (u *UCI) RunInputOutputLoop(engine *Engine) {
 				u.cmdNewGame(engine)
 			case "position":
 				u.cmdPosition(engine, input[1:])
+			case "go":
+				u.cmdGo(engine, input[1:])
+			case "stop":
+				u.cmdStop(engine)
 			}
 		}
 	}
 
 	// TODO -> shutdown engine.
 	os.Exit(0)
+}
+
+func (u *UCI) cmdStop(engine *Engine) {
+
+}
+
+func (u *UCI) cmdGo(engine *Engine, args []string) {
+	for len(args) > 0 {
+		cmd := args[0]
+		args = args[1:]
+		switch cmd {
+		case "searchmoves":
+		case "ponder":
+		case "wtime":
+		case "btime":
+		case "winc":
+		case "binc":
+		case "movestogo":
+		case "depth":
+		case "nodes":
+		case "mate":
+		case "movetime":
+		case "infinite":
+		}
+	}
+
+	moves := engine.GetLegalMoves()
+	r := rand.Intn(int(moves.Size))
+	bm := moves.Moves[r]
+	engine.board.MakeLegalMove(bm)
+	fmt.Println("bestmove", bm.MiniNotation())
 }
 
 func (u *UCI) cmdPosition(engine *Engine, args []string) {

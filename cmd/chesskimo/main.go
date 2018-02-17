@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/dbriemann/chesskimo"
 )
@@ -9,6 +11,7 @@ import (
 var version = "undefined"
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	fmt.Println("Chesskimo", version)
 
 	uci := &chesskimo.UCI{}

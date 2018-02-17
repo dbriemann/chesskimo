@@ -719,12 +719,12 @@ func (b *Board) DetectSliderChecksAndPins(color Color, pmarker *Info, ccount int
 	return checkCounter
 }
 
-func (b *Board) GenerateAllLegalMoves(mlist *MoveList, color Color) {
+func (b *Board) GenerateAllLegalMoves(mlist *MoveList) {
 	// Detect checks and pins.
-	b.DetectChecksAndPins(color)
+	b.DetectChecksAndPins(b.Player)
 
 	// Always generate king moves.
-	b.GenerateKingMoves(mlist, color)
+	b.GenerateKingMoves(mlist, b.Player)
 
 	// If there is a double check skip generating other moves.
 	if b.CheckInfo == CHECK_DOUBLE_CHECK {
@@ -732,11 +732,11 @@ func (b *Board) GenerateAllLegalMoves(mlist *MoveList, color Color) {
 	} // Simple checks are handled by the following move generator functions.
 
 	// Generate the rest of the legal moves.
-	b.GenerateKnightMoves(mlist, color)
-	b.GenerateQueenMoves(mlist, color)
-	b.GenerateBishopMoves(mlist, color)
-	b.GenerateRookMoves(mlist, color)
-	b.GeneratePawnMoves(mlist, color)
+	b.GenerateKnightMoves(mlist, b.Player)
+	b.GenerateQueenMoves(mlist, b.Player)
+	b.GenerateBishopMoves(mlist, b.Player)
+	b.GenerateRookMoves(mlist, b.Player)
+	b.GeneratePawnMoves(mlist, b.Player)
 }
 
 // GeneratePawnMoves generates all legal pawn moves for the given color
@@ -1193,7 +1193,7 @@ func (b *Board) Perft(depth int) uint64 {
 		return 1
 	}
 
-	b.GenerateAllLegalMoves(&mlist, b.Player)
+	b.GenerateAllLegalMoves(&mlist)
 	if depth == 1 {
 		return uint64(mlist.Size)
 	}
@@ -1215,7 +1215,7 @@ func (b *Board) PerftDivide(depth int) map[string]uint64 {
 	cpy := *b
 	results := map[string]uint64{}
 
-	b.GenerateAllLegalMoves(&mlist, b.Player)
+	b.GenerateAllLegalMoves(&mlist)
 
 	for i := uint32(0); i < mlist.Size; i++ {
 		move := &mlist.Moves[i]
