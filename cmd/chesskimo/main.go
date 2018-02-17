@@ -18,5 +18,5 @@ func main() {
 	engine := chesskimo.NewEngine("Chesskimo "+version+" 2018", "David Linus Briemann", uci)
 
 	// Input/output runs until exit.
-	uci.RunInputOutputLoop(engine)
+	engine.Run()
 }

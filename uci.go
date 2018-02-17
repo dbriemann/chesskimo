@@ -10,6 +10,7 @@ import (
 )
 
 type UCI struct {
+	newGame bool
 }
 
 func (u *UCI) RunInputOutputLoop(engine *Engine) {
@@ -20,6 +21,7 @@ func (u *UCI) RunInputOutputLoop(engine *Engine) {
 
 	for {
 		command, err := reader.ReadString('\n')
+		engine.logger.Print("<-- cmd: ", command)
 		if err == io.EOF {
 			break
 		} else if err == nil && len(command) > 0 {
@@ -79,45 +81,58 @@ func (u *UCI) cmdGo(engine *Engine, args []string) {
 	moves := engine.GetLegalMoves()
 	r := rand.Intn(int(moves.Size))
 	bm := moves.Moves[r]
+	engine.logger.Println("--> best move:", bm.MiniNotation())
 	engine.board.MakeLegalMove(bm)
+	engine.logger.Print(engine.board.String())
 	fmt.Println("bestmove", bm.MiniNotation())
 }
 
 func (u *UCI) cmdPosition(engine *Engine, args []string) {
-	engine.NewGame()
 	if len(args) > 1 {
-		first := args[0]
-		if first == "startpos" {
-			// Ignore this.. NewGame() sets startpos.
-		} else {
-			if first == "fen" {
-				// Some frontends say "position fen" then specify the actual fen, some specify
-				// the actual fen directly after "position", so we have to check both ways..
-				// no wonder with this as official doc: http://wbec-ridderkerk.nl/html/UCIProtocol.html
-				// *sigh*
-				args = args[1:]
-				if len(args) > 0 {
-					first = args[0]
-				} else {
-					return // Invalid.. missing arguments
-				}
-			}
-
-			fen := ""
-			// We now have to concat all FEN parts.
-			for i := 0; i < len(args); i++ {
-				if args[i] != "moves" {
-					// TODO - remove all quotes... just to be sure.
-					fen += args[i] + " "
-				} else {
-					// Finished FEN.. discard fen arguments.
-					args = args[i:]
-				}
-			}
-			err := engine.board.SetFEN(fen)
+		if !u.newGame {
+			// Continue ongoing game by just extracting the last move.
+			engine.logger.Print("continue ongoing game")
+			last := args[len(args)-1]
+			err := engine.MakeMove(last)
 			if err != nil {
-				fmt.Println(err.Error())
-				return // UCI ignores bad commands.
+				// UCI is crap.
+				engine.logger.Print("*** move ", last, " impossible: ", err.Error())
+			}
+		} else {
+			first := args[0]
+			if first == "startpos" {
+				args = args[1:]
+				engine.board.SetStartingPosition()
+			} else {
+				if first == "fen" {
+					// Some frontends say "position fen" then specify the actual fen, some specify
+					// the actual fen directly after "position", so we have to check both ways..
+					// no wonder with this as official doc: http://wbec-ridderkerk.nl/html/UCIProtocol.html
+					// *sigh*
+					args = args[1:]
+					if len(args) > 0 {
+						first = args[0]
+					} else {
+						return // Invalid.. missing arguments
+					}
+				}
+
+				fen := ""
+				// We now have to concat all FEN parts.
+				for i := 0; i < len(args); i++ {
+					if args[i] != "moves" {
+						// TODO - remove all quotes... just to be sure.
+						fen += args[i] + " "
+					} else {
+						// Finished FEN.. discard fen arguments.
+						args = args[i:]
+					}
+				}
+				err := engine.board.SetFEN(fen)
+				if err != nil {
+					fmt.Println(err.Error())
+					return // UCI ignores bad commands.
+				}
 			}
 
 			// Last check for "moves" subcommand.
@@ -125,15 +140,20 @@ func (u *UCI) cmdPosition(engine *Engine, args []string) {
 			if len(args) > 1 && args[0] == "moves" {
 				moves := args[1:]
 				for _, m := range moves {
-					engine.MakeMove(m)
+					err := engine.MakeMove(m)
+					if err != nil {
+						// UCI is crap.
+						engine.logger.Print("*** move ", m, " impossible: ", err.Error())
+					}
 				}
 			}
 		}
-
+		u.newGame = false
 	}
 }
 
 func (u *UCI) cmdNewGame(engine *Engine) {
+	u.newGame = true
 	engine.NewGame()
 }
 

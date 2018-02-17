@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -38,10 +39,20 @@ func NewEngine(name, author string, protocol Protocol) *Engine {
 		author:   author,
 		protocol: protocol,
 		board:    NewBoard(),
-		logger:   log.New(),
 	}
 
 	return e
+}
+
+func (e *Engine) Run() {
+	f, err := os.Create("chesskimo.log")
+	if err != nil {
+		panic("Cannot create log file.")
+	}
+	defer f.Close()
+	e.logger = log.New(f, "", log.LstdFlags|log.Lshortfile)
+
+	e.protocol.RunInputOutputLoop(e)
 }
 
 func (e *Engine) NewGame() {
@@ -95,9 +106,12 @@ func (e *Engine) MakeMove(move string) error {
 		to = to.To0x88()
 		bm := NewBitMove(from, to, promo)
 
+		e.logger.Print("*** exec move: ", bm.MiniNotation())
+
 		// TODO - test if move is really legal?
 
 		e.board.MakeLegalMove(bm)
+		e.logger.Print(e.board.String())
 	}
 
 	return nil
