@@ -2,7 +2,7 @@ GOFLAGS = -gcflags -B
 PACKAGE = github.com/dbriemann/chesskimo/cmd
 
 test:
-	go test ./...
+	go test -v ./...
 	
 clean:
 	rm chesskimo bench

@@ -310,6 +310,10 @@ func (b *Board) clearMetaInfo() {
 	b.Squares[0x7f] = INFO_NONE
 }
 
+//func (b *Board) Result(mlist *MoveList) State {
+
+//}
+
 // MakeLegalMove expects a legal move and applies it to the board.
 func (b *Board) MakeLegalMove(m BitMove) {
 	from, to, promo := m.All()
@@ -320,6 +324,9 @@ func (b *Board) MakeLegalMove(m BitMove) {
 
 	// Test if it is a capture.
 	if !tpiece.IsEmpty() {
+		if tpiece.Contains(KING) {
+			panic("\n" + b.InfoBoardString() + "\n" + b.String() + "\nfor move:" + m.MiniNotation() + "\n")
+		}
 		// Remove captured piece from the board.
 		b.removePiece(to)
 
@@ -552,7 +559,7 @@ func (b *Board) DetectChecksAndPins(color Color) {
 
 	kingSq := b.Kings[color]
 	checkCounter := 0
-	pinMarker := INFO_PIN
+	pinMarker := INFO_PIN_FIRST
 
 	// 1. Detect checks by knights.
 	for i := uint8(0); i < b.Knights[oppColor].Size; i++ {
@@ -563,7 +570,7 @@ func (b *Board) DetectChecksAndPins(color Color) {
 			// There can never be a double check of 2 knights.
 			b.CheckInfo = knightSq
 			checkCounter++
-			b.Squares[knightSq.ToInfoIndex()] = INFO_CHECK
+			b.Squares[knightSq.ToInfoIndex()].Set(INFO_MASK_CHECK)
 			break
 		}
 	}
@@ -596,7 +603,7 @@ func (b *Board) DetectChecksAndPins(color Color) {
 				// There can never be a double check of 2 pawns.
 				b.CheckInfo = pawnSq
 				checkCounter++
-				b.Squares[pawnSq.ToInfoIndex()] = INFO_CHECK
+				b.Squares[pawnSq.ToInfoIndex()].Set(INFO_MASK_CHECK)
 				goto EXIT_PAWN_CHECK // Acts as double break.. nothing harmful really... :)
 			}
 		}
@@ -654,9 +661,9 @@ func (b *Board) DetectSliderChecksAndPins(color Color, pmarker *Info, ccount int
 					continue
 				} else if curPiece.HasColor(color) {
 					// A friendly piece was encountered
-					if info <= INFO_ATTACKED {
-						// This is the first piece on the path -> mark it as attacked.
-						info = INFO_PIN_ATTACKED
+					if info == INFO_NONE {
+						// This is the first piece on the path -> mark it as a possible pin.
+						info.Set(INFO_MASK_MAYBE_PINNED)
 					} else {
 						// We already marked a piece on this path before -> there cannot be a pin anymore.
 						// (There is an exception for EP capture but those are handled elsewhere.
@@ -671,7 +678,7 @@ func (b *Board) DetectSliderChecksAndPins(color Color, pmarker *Info, ccount int
 							// It's a check!
 							checkCounter++
 							b.CheckInfo = sliderSq
-							info = INFO_CHECK
+							info.Set(INFO_MASK_CHECK)
 							break
 						} else {
 							// It's a pinner!
@@ -687,24 +694,24 @@ func (b *Board) DetectSliderChecksAndPins(color Color, pmarker *Info, ccount int
 				}
 			}
 
-			if info >= INFO_PIN || info == INFO_CHECK {
+			if info.IsSet(INFO_MASK_CHECK) || (info.Pinval() != 0) {
 				// We have detected a path that pins or checks. It will now
 				// be marked in the info board, so move generation will skip
 				// illegal moves.
-				b.Squares[sliderSq.ToInfoIndex()] = info
-				for stepSq := Square(int8(kingSq) + diffdir); stepSq != sliderSq; stepSq = Square(int8(stepSq) + diffdir) {
-					b.Squares[stepSq.ToInfoIndex()] = info
+				//				b.Squares[sliderSq.ToInfoIndex()] |= info
+				for stepSq := sliderSq; stepSq != kingSq; stepSq = Square(int8(stepSq) - diffdir) {
+					b.Squares[stepSq.ToInfoIndex()].Set(info)
 				}
 				// If it is a check we need to mark the square
-				// which lies behind the king on the check-path
-				// if it is not blocked by a friendly creature (could overwrite pin info).
-				if info == INFO_CHECK {
+				// which lies behind the king on the check-path.
+				if info.IsSet(INFO_MASK_CHECK) {
 					stepSq := Square(int8(kingSq) - diffdir)
 					if stepSq.OnBoard() {
-						tpiece := b.Squares[stepSq]
-						if !tpiece.HasColor(color) {
-							b.Squares[stepSq.ToInfoIndex()] = INFO_FORBIDDEN_ESCAPE
-						}
+						b.Squares[stepSq.ToInfoIndex()].Set(INFO_MASK_FORBIDDEN_ESCAPE)
+						//						tpiece := b.Squares[stepSq]
+						//						if !tpiece.HasColor(color) {
+						//							b.Squares[stepSq.ToInfoIndex()] = INFO_FORBIDDEN_ESCAPE
+						//						}
 					}
 				}
 			}
@@ -851,11 +858,12 @@ func (b *Board) newPawnMoveIfLegal(color Color, from, to Square, ptype, capPiece
 		// Find square where captured pawn is.
 		capSq = Square(int8(to) + PAWN_PUSH_DIRS[oppColor])
 	} else {
-		isPinned := (b.Squares[from.ToInfoIndex()] >= INFO_PIN)
-		if isPinned && b.Squares[to.ToInfoIndex()] != b.Squares[from.ToInfoIndex()] {
+		frompinval := b.Squares[from.ToInfoIndex()].Pinval()
+		isPinned := (frompinval != 0)
+		if isPinned && b.Squares[to.ToInfoIndex()].Pinval() != frompinval {
 			// Pinned and cannot move there.
 			return BitMove(0), false
-		} else if b.CheckInfo.OnBoard() && b.Squares[to.ToInfoIndex()] != INFO_CHECK {
+		} else if b.CheckInfo.OnBoard() && !b.Squares[to.ToInfoIndex()].IsSet(INFO_MASK_CHECK) {
 			// Check and move doesn't change that.
 			return BitMove(0), false
 		} else {
@@ -913,7 +921,7 @@ func (b *Board) GenerateKnightMoves(mlist *MoveList, color Color) {
 	for i := uint8(0); i < b.Knights[color].Size; i++ {
 		from = b.Knights[color].Pieces[i]
 
-		if b.Squares[from.ToInfoIndex()] >= INFO_PIN {
+		if b.Squares[from.ToInfoIndex()].Pinval() != 0 {
 			// Pinned knights cannot move.
 			continue
 		}
@@ -925,7 +933,7 @@ func (b *Board) GenerateKnightMoves(mlist *MoveList, color Color) {
 			to = Square(int8(from) + dir)
 			if to.OnBoard() {
 				tpiece = b.Squares[to]
-				if isCheck && b.Squares[to.ToInfoIndex()] != INFO_CHECK {
+				if isCheck && !b.Squares[to.ToInfoIndex()].IsSet(INFO_MASK_CHECK) {
 					// If there is a check but the move's target does not change that fact -> impossible move.
 					continue
 				} else if !tpiece.HasColor(color) {
@@ -961,7 +969,7 @@ func (b *Board) GenerateKingMoves(mlist *MoveList, color Color) {
 				continue
 			}
 			targets[i] = true
-			if b.Squares[to.ToInfoIndex()] != INFO_FORBIDDEN_ESCAPE {
+			if !b.Squares[to.ToInfoIndex()].IsSet(INFO_MASK_FORBIDDEN_ESCAPE) {
 				if !tpiece.HasColor(color) {
 					// Add a normal or capture move.
 					move = NewBitMove(from, to, NONE)
@@ -1134,7 +1142,7 @@ func (b *Board) GenerateSlidingMoves(mlist *MoveList, color Color, ptype Piece, 
 	// Iterate all specific pieces.
 	for i := uint8(0); i < plist.Size; i++ {
 		from = plist.Pieces[i]
-		isPinned := (b.Squares[from.ToInfoIndex()] >= INFO_PIN)
+		isPinned := (b.Squares[from.ToInfoIndex()].Pinval() != 0)
 
 		// For every direction a slider can go..
 		//		for _, dir := range dirs {
@@ -1151,7 +1159,7 @@ func (b *Board) GenerateSlidingMoves(mlist *MoveList, color Color, ptype Piece, 
 				} else if isPinned && b.Squares[to.ToInfoIndex()] != b.Squares[from.ToInfoIndex()] {
 					// Piece is pinned but target is not on pin path -> next direction.
 					break
-				} else if isCheck && b.Squares[to.ToInfoIndex()] != INFO_CHECK {
+				} else if isCheck && !b.Squares[to.ToInfoIndex()].IsSet(INFO_MASK_CHECK) {
 					tpiece = b.Squares[to]
 					if !tpiece.IsEmpty() {
 						// King is in check but the move does neither capture the checker

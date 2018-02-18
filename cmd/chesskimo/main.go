@@ -15,7 +15,7 @@ func main() {
 	fmt.Println("Chesskimo", version)
 
 	uci := &chesskimo.UCI{}
-	engine := chesskimo.NewEngine("Chesskimo "+version+" 2018", "David Linus Briemann", uci)
+	engine := chesskimo.NewEngine("Chesskimo "+version+" 2018", "David Linus Briemann", uci, chesskimo.SimpleMCSearch)
 
 	// Input/output runs until exit.
 	engine.Run()

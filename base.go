@@ -7,6 +7,8 @@ type Color = Piece
 type Square = Piece
 type Info = Piece
 
+type State int8
+
 const (
 	// Various
 	NONE Piece = 0
@@ -38,6 +40,13 @@ const (
 )
 
 const (
+	GAMESTATE_ONGOING   State = -2
+	GAMESTATE_DRAW      State = -1
+	GAMESTATE_BLACK_WIN State = 0
+	GAMESTATE_WHITE_WIN State = 1
+)
+
+const (
 	// occupancy types by color and piece
 	BPAWN   Piece = PAWN | BLACK
 	BKNIGHT Piece = KNIGHT | BLACK
@@ -65,13 +74,37 @@ const (
 )
 
 const (
-	INFO_NONE Info = iota
-	INFO_ATTACKED
-	INFO_CHECK
-	INFO_FORBIDDEN_ESCAPE
-	INFO_PIN_ATTACKED
-	INFO_PIN
+	INFO_NONE                  Info = 0x0
+	INFO_PIN_FIRST             Info = 1
+	INFO_MASK_PINNED           Info = 0x0F // Bits 1-4 == counting pinned pieces.
+	INFO_MASK_ATTACKED         Info = 16   // Bit 5 == attacked?
+	INFO_MASK_FORBIDDEN_ESCAPE Info = 32   // Bit 6 == forbidden square for king (line of check).
+	INFO_MASK_MAYBE_PINNED     Info = 64   // Bit 7 == mark for pinning.
+	INFO_MASK_CHECK            Info = 128  // Bit 8 == check.
+
+//	INFO_NONE Info = iota
+//	INFO_ATTACKED
+//	INFO_CHECK
+//	INFO_FORBIDDEN_ESCAPE
+//	INFO_PIN_ATTACKED
+//	INFO_PIN
 )
+
+func (i Info) Pinval() Square {
+	return i & INFO_MASK_PINNED
+}
+
+func (i Info) IsSet(mask Info) bool {
+	return (i & mask) != 0
+}
+
+func (i *Info) Set(mask Info) {
+	*i |= mask
+}
+
+func (i *Info) Unset(mask Info) {
+	*i &= ^mask
+}
 
 var (
 	// BLACK == 0, WHITE == 1

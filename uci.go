@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"math/rand"
 	"os"
 	"strings"
 )
@@ -78,20 +77,23 @@ func (u *UCI) cmdGo(engine *Engine, args []string) {
 		}
 	}
 
-	moves := engine.GetLegalMoves()
-	r := rand.Intn(int(moves.Size))
-	bm := moves.Moves[r]
-	engine.logger.Println("--> best move:", bm.MiniNotation())
-	engine.board.MakeLegalMove(bm)
+	//	moves := engine.GetLegalMoves()
+	//	r := rand.Intn(int(moves.Size))
+	//	bm := moves.Moves[r]
+	ts := TimeSettings{}
+	dostop := uint32(0)
+	sr := engine.search(engine, &ts, &dostop)
+	engine.logger.Println("--> best move:", sr.BestMove.MiniNotation())
+	engine.board.MakeLegalMove(sr.BestMove)
 	engine.logger.Print(engine.board.String())
-	fmt.Println("bestmove", bm.MiniNotation())
+	fmt.Println("bestmove", sr.BestMove.MiniNotation())
 }
 
 func (u *UCI) cmdPosition(engine *Engine, args []string) {
 	if len(args) > 1 {
 		if !u.newGame {
 			// Continue ongoing game by just extracting the last move.
-			engine.logger.Print("continue ongoing game")
+			engine.logger.Print("*** continue ongoing game")
 			last := args[len(args)-1]
 			err := engine.MakeMove(last)
 			if err != nil {
@@ -130,7 +132,7 @@ func (u *UCI) cmdPosition(engine *Engine, args []string) {
 				}
 				err := engine.board.SetFEN(fen)
 				if err != nil {
-					fmt.Println(err.Error())
+					fmt.Println("--> error: ", err.Error())
 					return // UCI ignores bad commands.
 				}
 			}

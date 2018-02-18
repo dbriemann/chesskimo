@@ -2,7 +2,6 @@ package chesskimo
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -23,22 +22,24 @@ type Engine struct {
 	name   string
 	author string
 	// protocol defines how the engine communicates with the frontend.
-	protocol Protocol
+	protocol Communicator
 	// atomicState defines the current state of the engine
 	//	atomicState uint32
 	//	waitgroup   sync.WaitGroup
 
-	board Board
+	board  Board
+	search SearchFun
 
 	logger *log.Logger
 }
 
-func NewEngine(name, author string, protocol Protocol) *Engine {
+func NewEngine(name, author string, protocol Communicator, searchFun SearchFun) *Engine {
 	e := &Engine{
 		name:     name,
 		author:   author,
 		protocol: protocol,
 		board:    NewBoard(),
+		search:   searchFun,
 	}
 
 	return e
@@ -75,13 +76,11 @@ func (e *Engine) MakeMove(move string) error {
 	if len(move) >= 4 {
 		promo := NONE
 
-		fmt.Println(move[0:2])
 		from, err := parseFENSquare(move[0:2])
 		if err != nil {
 			return ErrInvalidMoveNotation
 		}
 
-		fmt.Println(move[2:4])
 		to, err := parseFENSquare(move[2:4])
 		if err != nil {
 			return ErrInvalidMoveNotation
@@ -110,8 +109,9 @@ func (e *Engine) MakeMove(move string) error {
 
 		// TODO - test if move is really legal?
 
+		e.logger.Print("\n" + e.board.String())
+		e.logger.Print("\n" + e.board.InfoBoardString())
 		e.board.MakeLegalMove(bm)
-		e.logger.Print(e.board.String())
 	}
 
 	return nil

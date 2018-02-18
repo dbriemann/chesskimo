@@ -5,10 +5,13 @@ import (
 	"time"
 )
 
-//
+// BenchmarkPerft
 // Used to show go1.10 performance loss compared to go1.9.4
-// Actual benchmarking has its own executable.
-// Funnily in this benchmark there is no difference .. ???
+//
+// Funnily in this benchmark there is no difference opposed
+// to /cmd/bench which is ~10% slower with go1.10.
+//
+// TODO -> What's going on here?
 //
 func BenchmarkPerft(b *testing.B) {
 	type set struct {
@@ -261,7 +264,7 @@ func TestGenerateKnightMoves(t *testing.T) {
 		board.GenerateKnightMoves(&mlist, board.Player)
 		strmoves := mlist.String()
 		if strmoves != results[i] {
-			t.Fatalf("Position\n %s expected move list: %s\n but got: %s\n", &board, results[i], &mlist)
+			t.Fatalf("Position\n %s %s expected move list: %s\n but got: %s\n", &board, board.InfoBoardString(), results[i], &mlist)
 		}
 	}
 }
