@@ -71,10 +71,10 @@ func benchSet(s set) (uint64, float64) {
 	board.SetFEN(s.Fen)
 	start := time.Now()
 	nodes := board.Perft(s.Depth)
-	end := time.Now()
+	elapsed := time.Since(start)
 	if s.Result != nodes {
 		str := fmt.Sprintf("Wrong Perft result for FEN %s: %d but should be %d\n", s.Fen, nodes, s.Result)
 		panic(str)
 	}
-	return nodes, end.Sub(start).Seconds()
+	return nodes, elapsed.Seconds()
 }

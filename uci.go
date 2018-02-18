@@ -55,7 +55,7 @@ func (u *UCI) RunInputOutputLoop(engine *Engine) {
 }
 
 func (u *UCI) cmdStop(engine *Engine) {
-
+	// TODO stop engine
 }
 
 func (u *UCI) cmdGo(engine *Engine, args []string) {

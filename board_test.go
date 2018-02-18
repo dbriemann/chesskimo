@@ -5,6 +5,42 @@ import (
 	"time"
 )
 
+//
+// Used to show go1.10 performance loss compared to go1.9.4
+// Actual benchmarking has its own executable.
+// Funnily in this benchmark there is no difference .. ???
+//
+func BenchmarkPerft(b *testing.B) {
+	type set struct {
+		Fen    string
+		Depth  int
+		Result uint64
+	}
+	testsets := []set{
+		set{Fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", Depth: 6, Result: 119060324},
+		set{Fen: "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", Depth: 5, Result: 193690690},
+		set{Fen: "n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", Depth: 6, Result: 71179139},
+		set{Fen: "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1", Depth: 5, Result: 15833292},
+		set{Fen: "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0", Depth: 7, Result: 178633661},
+	}
+
+	board := NewBoard()
+
+	for n := 0; n < b.N; n++ {
+		for i, set := range testsets {
+			board.SetFEN(set.Fen)
+			nodes := board.Perft(set.Depth)
+			if nodes != set.Result {
+				b.Fatalf("Perft set %d failed", i)
+			}
+		}
+	}
+}
+
+//
+//
+//
+
 func TestPerft(t *testing.T) {
 	// Currently test validates all FEN positions with perft until depth of 5.
 	depth := 5
