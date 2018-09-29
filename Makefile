@@ -18,3 +18,4 @@ release:
 profile:
 	./bench -profile=prof.out
 	go tool pprof -callgrind -output=profile.grind bench prof.out
+	go tool pprof -svg prof.out > profile.svg

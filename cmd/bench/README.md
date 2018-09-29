@@ -45,7 +45,7 @@ fen,depth,nodes,seconds,nps
 "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0",7,178633661,2.491697,71691571.033979  
 **Average NPS: 46789901.241221**
 
-## Version v0.0.6
+## v0.0.6
 fen,depth,nodes,seconds,nps
 "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",6,119060324,2.251585,52878440.607252  
 "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",5,193690690,2.487607,77862245.817526  

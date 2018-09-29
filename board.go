@@ -95,7 +95,7 @@ func populateDiffMaps() {
 					if target == to {
 						diffdir = dir
 						// Can be reachedby queens and bishops (diagonally).
-						pbits |= (BISHOP | QUEEN)
+						pbits |= BISHOP | QUEEN
 						// The goto acts as a double break.
 						// Skipping orthos and knights.
 						goto INSPECTION_FINISHED
@@ -115,7 +115,7 @@ func populateDiffMaps() {
 					if target == to {
 						diffdir = dir
 						// Can be reachedby queens and bishops (diagonally).
-						pbits |= (ROOK | QUEEN)
+						pbits |= ROOK | QUEEN
 						// The goto acts as a double break.
 						// Skipping knights.
 						goto INSPECTION_FINISHED
