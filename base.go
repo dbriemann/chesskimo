@@ -15,6 +15,8 @@ const (
 	// OTB is off the board and used as a non-index in piece lists.
 	OTB Square = 0x7F
 
+	INFINITY = 1000000
+
 	//	NOT0x88 = ^7
 
 	// Colors:

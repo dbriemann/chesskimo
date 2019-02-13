@@ -80,13 +80,13 @@ func (u *UCI) cmdGo(engine *Engine, args []string) {
 	//	moves := engine.GetLegalMoves()
 	//	r := rand.Intn(int(moves.Size))
 	//	bm := moves.Moves[r]
-	ts := TimeSettings{}
+	ts := SearchSettings{}
 	dostop := uint32(0)
 	sr := engine.search(engine, &ts, &dostop)
-	engine.logger.Println("--> best move:", sr.BestMove.MiniNotation())
-	engine.board.MakeLegalMove(sr.BestMove)
+	engine.logger.Println("--> best move:", sr.Move.MiniNotation())
+	engine.board.MakeLegalMove(sr.Move)
 	engine.logger.Print(engine.board.String())
-	fmt.Println("bestmove", sr.BestMove.MiniNotation())
+	fmt.Println("bestmove", sr.Move.MiniNotation())
 }
 
 func (u *UCI) cmdPosition(engine *Engine, args []string) {

@@ -3,10 +3,10 @@ PACKAGE = github.com/dbriemann/chesskimo/cmd
 
 test:
 	go test -v ./...
-	
+
 clean:
 	rm chesskimo bench
-	
+
 debug:
 	go build -o chesskimo -i -v -ldflags="-X main.version=$(shell git describe --always)" $(PACKAGE)/chesskimo
 	go build -o bench -i -v -ldflags="-X main.version=$(shell git describe --always)" $(PACKAGE)/bench

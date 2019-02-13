@@ -7,10 +7,10 @@ import (
 
 // SimpleMCSearch runs a simple random simulation (monte carlo) for a
 // given time and returns the best move.
-func SimpleMCSearch(engine *Engine, ts *TimeSettings, dostop *uint32) SearchResult {
+func SimpleMCSearch(engine *Engine, ss *SearchSettings, dostop *uint32) SearchResult {
 	startTime := time.Now()
 	board := &engine.board
-	sr := SearchResult{BestMove: BitMove(0)}
+	sr := SearchResult{Move: BitMove(0)}
 	player := board.Player
 	mlist := MoveList{}
 	workMlist := MoveList{}
@@ -76,7 +76,7 @@ func SimpleMCSearch(engine *Engine, ts *TimeSettings, dostop *uint32) SearchResu
 	for i := 0; i < len(scores); i++ {
 		score := scores[i]
 		if score > bestscore {
-			sr.BestMove = mlist.Moves[i]
+			sr.Move = mlist.Moves[i]
 			bestscore = score
 		}
 		engine.logger.Printf("Move %s has score %d", mlist.Moves[i].MiniNotation(), score)
