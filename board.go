@@ -87,6 +87,7 @@ func populateDiffMaps() {
 			for _, dir := range DIAGONAL_DIRS {
 				for steps := int8(1); ; steps++ {
 					target := Square(int8(from) + steps*dir)
+					target.Flip()
 					if !target.OnBoard() {
 						// We left the board -> next dir.
 						break
