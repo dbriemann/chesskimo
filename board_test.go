@@ -12,7 +12,6 @@ import (
 // to /cmd/bench which is ~10% slower with go1.10.
 //
 // TODO -> What's going on here?
-//
 func BenchmarkPerft(b *testing.B) {
 	type set struct {
 		Fen    string
@@ -20,11 +19,11 @@ func BenchmarkPerft(b *testing.B) {
 		Result uint64
 	}
 	testsets := []set{
-		set{Fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", Depth: 6, Result: 119060324},
-		set{Fen: "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", Depth: 5, Result: 193690690},
-		set{Fen: "n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", Depth: 6, Result: 71179139},
-		set{Fen: "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1", Depth: 5, Result: 15833292},
-		set{Fen: "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0", Depth: 7, Result: 178633661},
+		{Fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", Depth: 6, Result: 119060324},
+		{Fen: "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", Depth: 5, Result: 193690690},
+		{Fen: "n1n5/PPPk4/8/8/8/8/4Kppp/5N1N b - - 0 1", Depth: 6, Result: 71179139},
+		{Fen: "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1", Depth: 5, Result: 15833292},
+		{Fen: "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 0", Depth: 7, Result: 178633661},
 	}
 
 	board := NewBoard()
@@ -84,23 +83,23 @@ func TestSquareDiffs(t *testing.T) {
 	}
 
 	testset := []set{
-		set{0x72, 0x12, ROOK | QUEEN},          // file test down to up
-		set{0x12, 0x72, ROOK | QUEEN},          // file test up to down
-		set{0x51, 0x54, ROOK | QUEEN},          // rank test left to right
-		set{0x54, 0x51, ROOK | QUEEN},          // rank test right to left
-		set{0x64, 0x37, BISHOP | QUEEN},        // diagonal up_left to down_right test
-		set{0x37, 0x64, BISHOP | QUEEN},        // diagonal down_right to up_left test
-		set{0x77, 0x0, BISHOP | QUEEN},         // diagonal up_right to down_left test
-		set{0x0, 0x77, BISHOP | QUEEN},         // diagonal down_left to up_right test
-		set{0x0, 0x12, KNIGHT},                 // knight jump right+up_right
-		set{0x0, 0x21, KNIGHT},                 // knight jump up+up_right
-		set{0x77, 0x56, KNIGHT},                // knight jump down+down_left
-		set{0x77, 0x65, KNIGHT},                // knight jump left+down_left
-		set{0x74, 0x65, KING | QUEEN | BISHOP}, // one step diagonal (king test)
-		set{0x4, 0x5, KING | QUEEN | ROOK},     // one step orthogonal (king test)
+		{0x72, 0x12, ROOK | QUEEN},          // file test down to up
+		{0x12, 0x72, ROOK | QUEEN},          // file test up to down
+		{0x51, 0x54, ROOK | QUEEN},          // rank test left to right
+		{0x54, 0x51, ROOK | QUEEN},          // rank test right to left
+		{0x64, 0x37, BISHOP | QUEEN},        // diagonal up_left to down_right test
+		{0x37, 0x64, BISHOP | QUEEN},        // diagonal down_right to up_left test
+		{0x77, 0x0, BISHOP | QUEEN},         // diagonal up_right to down_left test
+		{0x0, 0x77, BISHOP | QUEEN},         // diagonal down_left to up_right test
+		{0x0, 0x12, KNIGHT},                 // knight jump right+up_right
+		{0x0, 0x21, KNIGHT},                 // knight jump up+up_right
+		{0x77, 0x56, KNIGHT},                // knight jump down+down_left
+		{0x77, 0x65, KNIGHT},                // knight jump left+down_left
+		{0x74, 0x65, KING | QUEEN | BISHOP}, // one step diagonal (king test)
+		{0x4, 0x5, KING | QUEEN | ROOK},     // one step orthogonal (king test)
 		// impossible moves
-		set{0x0, 0x71, NONE},
-		set{0x5, 0x36, NONE},
+		{0x0, 0x71, NONE},
+		{0x5, 0x36, NONE},
 	}
 
 	for i, ts := range testset {
@@ -120,22 +119,22 @@ func TestDiffDirs(t *testing.T) {
 	}
 
 	testset := []set{
-		set{0x70, 0x07, DOWN_RIGHT},
-		set{0x47, 0x65, UP_LEFT},
-		set{0x77, 0x11, DOWN_LEFT},
-		set{0x24, 0x46, UP_RIGHT},
-		set{0x61, 0x66, RIGHT},
-		set{0x33, 0x30, LEFT},
-		set{0x22, 0x62, UP},
-		set{0x55, 0x25, DOWN},
-		set{0x00, 0x12, RIGHT + UP_RIGHT},
-		set{0x00, 0x21, UP + UP_RIGHT},
-		set{0x70, 0x62, RIGHT + DOWN_RIGHT},
-		set{0x70, 0x51, DOWN + DOWN_RIGHT},
-		set{0x77, 0x65, LEFT + DOWN_LEFT},
-		set{0x77, 0x56, DOWN + DOWN_LEFT},
-		set{0x07, 0x15, LEFT + UP_LEFT},
-		set{0x07, 0x26, UP + UP_LEFT},
+		{0x70, 0x07, DOWN_RIGHT},
+		{0x47, 0x65, UP_LEFT},
+		{0x77, 0x11, DOWN_LEFT},
+		{0x24, 0x46, UP_RIGHT},
+		{0x61, 0x66, RIGHT},
+		{0x33, 0x30, LEFT},
+		{0x22, 0x62, UP},
+		{0x55, 0x25, DOWN},
+		{0x00, 0x12, RIGHT + UP_RIGHT},
+		{0x00, 0x21, UP + UP_RIGHT},
+		{0x70, 0x62, RIGHT + DOWN_RIGHT},
+		{0x70, 0x51, DOWN + DOWN_RIGHT},
+		{0x77, 0x65, LEFT + DOWN_LEFT},
+		{0x77, 0x56, DOWN + DOWN_LEFT},
+		{0x07, 0x15, LEFT + UP_LEFT},
+		{0x07, 0x26, UP + UP_LEFT},
 	}
 
 	for i, ts := range testset {

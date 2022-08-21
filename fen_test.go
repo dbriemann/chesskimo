@@ -86,14 +86,14 @@ func TestParseColor(t *testing.T) {
 // TestParseCastlingRights tests if the ParseCastlingRights function behaves correctly.
 func TestParseCastlingRights(t *testing.T) {
 	tests := map[string][][2]bool{
-		"KkQq": [][2]bool{[2]bool{true, true}, [2]bool{true, true}},
-		"KQq":  [][2]bool{[2]bool{false, true}, [2]bool{true, true}},
-		"kQq":  [][2]bool{[2]bool{true, false}, [2]bool{true, true}},
-		"Kkq":  [][2]bool{[2]bool{true, true}, [2]bool{true, false}},
-		"KkQ":  [][2]bool{[2]bool{true, true}, [2]bool{false, true}},
-		"Kk":   [][2]bool{[2]bool{true, true}, [2]bool{false, false}},
-		"Qq":   [][2]bool{[2]bool{false, false}, [2]bool{true, true}},
-		"-":    [][2]bool{[2]bool{false, false}, [2]bool{false, false}},
+		"KkQq": {{true, true}, {true, true}},
+		"KQq":  {{false, true}, {true, true}},
+		"kQq":  {{true, false}, {true, true}},
+		"Kkq":  {{true, true}, {true, false}},
+		"KkQ":  {{true, true}, {false, true}},
+		"Kk":   {{true, true}, {false, false}},
+		"Qq":   {{false, false}, {true, true}},
+		"-":    {{false, false}, {false, false}},
 	}
 
 	for s, r := range tests {

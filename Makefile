@@ -8,12 +8,12 @@ clean:
 	rm chesskimo bench
 
 debug:
-	go build -o chesskimo -i -v -ldflags="-X main.version=$(shell git describe --always)" $(PACKAGE)/chesskimo
-	go build -o bench -i -v -ldflags="-X main.version=$(shell git describe --always)" $(PACKAGE)/bench
+	go build -o chesskimo -v -ldflags="-X main.version=$(shell git describe --always)" $(PACKAGE)/chesskimo
+	go build -o bench -v -ldflags="-X main.version=$(shell git describe --always)" $(PACKAGE)/bench
 
 release:
-	go build -o chesskimo -i -v -gcflags="-B" -ldflags="-X main.version=$(shell git describe --always)" $(PACKAGE)/chesskimo
-	go build -o bench -i -v -gcflags="-B" -ldflags="-X main.version=$(shell git describe --always)" $(PACKAGE)/bench
+	go build -o chesskimo -v -gcflags="-B" -ldflags="-X main.version=$(shell git describe --always)" $(PACKAGE)/chesskimo
+	go build -o bench -v -gcflags="-B" -ldflags="-X main.version=$(shell git describe --always)" $(PACKAGE)/bench
 
 profile:
 	./bench -profile=prof.out
