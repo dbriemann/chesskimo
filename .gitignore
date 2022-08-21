@@ -31,5 +31,6 @@ _testmain.go
 cover.out
 .idea
 prof.out
-profile.grind
+profile.grind*
+profile.svg
 chesskimo.log
